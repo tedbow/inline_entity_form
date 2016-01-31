@@ -193,29 +193,15 @@ class InlineEntityFormComplexWebTest extends InlineEntityFormTestBase {
    *
    * ief_test_nested1 -> ief_test_nested2 -> ief_test_nested3
    */
-  public function testNestedEntityCreationWithDifferentBundles() {
+  public function testNestedEntityCreationWithDifferentBundlesAjaxSubmit() {
     $required_possibilities = [
       FALSE,
       // Fails because of a known bug. See: https://www.drupal.org/node/2649710
       // TRUE,
     ];
     foreach ($required_possibilities as $required) {
-      /** @var \Drupal\Core\Field\FieldConfigInterface $ief_test_nested1 */
-      $ief_test_nested1 = $this->fieldConfigStorage->load('node.ief_test_nested1.test_ref_nested1');
-      $ief_test_nested1->setRequired($required);
-      $ief_test_nested1->save();
-      /** @var \Drupal\Core\Field\FieldConfigInterface $ief_test_nested2 */
-      $ief_test_nested2 = $this->fieldConfigStorage->load('node.ief_test_nested2.test_ref_nested2');
-      $ief_test_nested2->setRequired($required);
-      $ief_test_nested2->save();
+      $this->setupNestedComplexForm($required);
 
-      $this->drupalGet('node/add/ief_test_nested1');
-
-      if (!$required) {
-        // Open inline forms if not required.
-        $this->drupalPostAjaxForm(NULL, [], $this->getButtonName('//input[@type="submit" and @value="Add new node 2"]'));
-        $this->drupalPostAjaxForm(NULL, [], $this->getButtonName('//input[@type="submit" and @value="Add new node 3"]'));
-      }
 
       $nested3_title = 'nested3 title steps ' . ($required ? 'required' : 'not required');
       $nested2_title = 'nested2 title steps ' . ($required ? 'required' : 'not required');
@@ -245,27 +231,25 @@ class InlineEntityFormComplexWebTest extends InlineEntityFormTestBase {
       $this->assertEqual('ief_test_nested1', $nested1_node->bundle(), "First node's type looks correct.");
       $this->assertEqual($nested2_title, $nested1_node->test_ref_nested1->entity->label(), "Second node's title looks correct.");
       $this->assertEqual('ief_test_nested2', $nested1_node->test_ref_nested1->entity->bundle(), "Second node's type looks correct.");
-      $this->assertEqual($nested3_title, $nested1_node->test_ref_nested1->entity->test_ref_nested2->entity->label(), "Second node's title looks correct.");
-      $this->assertEqual('ief_test_nested3', $nested1_node->test_ref_nested1->entity->test_ref_nested2->entity->bundle(), "Second node's type looks correct.");
+      $this->assertEqual($nested3_title, $nested1_node->test_ref_nested1->entity->test_ref_nested2->entity->label(), "Third node's title looks correct.");
+      $this->assertEqual('ief_test_nested3', $nested1_node->test_ref_nested1->entity->test_ref_nested2->entity->bundle(), "Third node's type looks correct.");
     }
+  }
+
+  /**
+   * Tests the entity creation with different bundles nested in each other.
+   *
+   * ief_test_nested1 -> ief_test_nested2 -> ief_test_nested3
+   */
+  public function testNestedEntityCreationWithDifferentBundlesNoAjaxSubmit() {
+    $required_possibilities = [
+      FALSE,
+      // Fails because of a known bug. See: https://www.drupal.org/node/2649710
+      // TRUE,
+    ];
 
     foreach ($required_possibilities as $required) {
-      /** @var \Drupal\Core\Field\FieldConfigInterface $ief_test_nested1 */
-      $ief_test_nested1 = $this->fieldConfigStorage->load('node.ief_test_nested1.test_ref_nested1');
-      $ief_test_nested1->setRequired($required);
-      $ief_test_nested1->save();
-      /** @var \Drupal\Core\Field\FieldConfigInterface $ief_test_nested2 */
-      $ief_test_nested2 = $this->fieldConfigStorage->load('node.ief_test_nested2.test_ref_nested2');
-      $ief_test_nested2->setRequired($required);
-      $ief_test_nested2->save();
-
-      $this->drupalGet('node/add/ief_test_nested1');
-
-      if (!$required) {
-        // Open inline forms if not required.
-        $this->drupalPostAjaxForm(NULL, [], $this->getButtonName('//input[@type="submit" and @value="Add new node 2"]'));
-        $this->drupalPostAjaxForm(NULL, [], $this->getButtonName('//input[@type="submit" and @value="Add new node 3"]'));
-      }
+      $this->setupNestedComplexForm($required);
 
       $nested3_title = 'nested3 title single ' . ($required ? 'required' : 'not required');
       $nested2_title = 'nested2 title single ' . ($required ? 'required' : 'not required');
@@ -282,8 +266,8 @@ class InlineEntityFormComplexWebTest extends InlineEntityFormTestBase {
       $this->assertEqual('ief_test_nested1', $nested1_node->bundle(), "First node's type looks correct.");
       $this->assertEqual($nested2_title, $nested1_node->test_ref_nested1->entity->label(), "Second node's title looks correct.");
       $this->assertEqual('ief_test_nested2', $nested1_node->test_ref_nested1->entity->bundle(), "Second node's type looks correct.");
-      $this->assertEqual($nested3_title, $nested1_node->test_ref_nested1->entity->test_ref_nested2->entity->label(), "Second node's title looks correct.");
-      $this->assertEqual('ief_test_nested3', $nested1_node->test_ref_nested1->entity->test_ref_nested2->entity->bundle(), "Second node's type looks correct.");
+      $this->assertEqual($nested3_title, $nested1_node->test_ref_nested1->entity->test_ref_nested2->entity->label(), "Third node's title looks correct.");
+      $this->assertEqual('ief_test_nested3', $nested1_node->test_ref_nested1->entity->test_ref_nested2->entity->bundle(), "Third node's type looks correct.");
     }
   }
 
@@ -557,6 +541,35 @@ class InlineEntityFormComplexWebTest extends InlineEntityFormTestBase {
       $retval[$node->id()] = $value['label'];
     }
     return $retval;
+  }
+
+  /**
+   * Set up the ief_test_nested1 node add form.
+   *
+   * Sets the nested fields' required settings.
+   * Gets the form.
+   * Opens the inline entity forms if they are not required.
+   *
+   * @param boolean $required
+   *  Whether the fields are required.
+   */
+  protected function setupNestedComplexForm($required) {
+    /** @var \Drupal\Core\Field\FieldConfigInterface $ief_test_nested1 */
+    $ief_test_nested1 = $this->fieldConfigStorage->load('node.ief_test_nested1.test_ref_nested1');
+    $ief_test_nested1->setRequired($required);
+    $ief_test_nested1->save();
+    /** @var \Drupal\Core\Field\FieldConfigInterface $ief_test_nested2 */
+    $ief_test_nested2 = $this->fieldConfigStorage->load('node.ief_test_nested2.test_ref_nested2');
+    $ief_test_nested2->setRequired($required);
+    $ief_test_nested2->save();
+
+    $this->drupalGet('node/add/ief_test_nested1');
+
+    if (!$required) {
+      // Open inline forms if not required.
+      $this->drupalPostAjaxForm(NULL, [], $this->getButtonName('//input[@type="submit" and @value="Add new node 2"]'));
+      $this->drupalPostAjaxForm(NULL, [], $this->getButtonName('//input[@type="submit" and @value="Add new node 3"]'));
+    }
   }
 
 }
