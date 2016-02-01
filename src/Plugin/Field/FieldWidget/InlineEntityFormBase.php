@@ -420,11 +420,12 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
         $trigger['#limit_validation_errors'],
         function ($item) use ($field_parents) {
           $union = $field_parents + $item;
-          return $union == max(count($item), count($field_parents));
+          return count($union) == max(count($item), count($field_parents));
         }
       );
 
       if (empty($relevant_sections)) {
+        //return TRUE;
         return FALSE;
       }
     }

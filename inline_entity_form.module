@@ -12,6 +12,8 @@ use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Element;
 use Drupal\inline_entity_form\Form\EntityInlineForm;
+use Drupal\Core\Entity\EntityFormInterface;
+use Drupal\inline_entity_form\Element\InlineEntityForm;
 
 /**
  * Implements hook_entity_info_alter().
@@ -529,4 +531,18 @@ function inline_entity_form_pre_render_add_fieldset_markup($form) {
   }
 
   return $form;
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function Xinline_entity_form_form_alter(&$form, FormStateInterface &$form_state, $form_id) {
+  $build_info = $form_state->getBuildInfo();
+  if (isset($build_info['callback_object'])) {
+    $form_object = $build_info['callback_object'];
+    if ($form_object instanceof EntityFormInterface) {
+      InlineEntityForm::attachMainSubmit($form);
+    }
+  }
+
 }
