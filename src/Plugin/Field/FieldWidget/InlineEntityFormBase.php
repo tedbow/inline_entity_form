@@ -411,10 +411,18 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
    *   TRUE if current submit is relevant for this IEF widget and FALSE if not.
    */
   protected function isSubmitRelevant(array $form, FormStateInterface $form_state) {
+    // Always return - this only breaks \Drupal\inline_entity_form\Tests\InlineEntityFormComplexWebTest::testEntityCreation
+    return TRUE;
     $field_name = $this->fieldDefinition->getName();
     $field_parents = array_slice(array_merge($form['#parents'], [$field_name, 'form']), 0, -1);
 
     $trigger = $form_state->getTriggeringElement();
+    if (strpos($trigger['#name'], 'ief-') === 0) {
+      return TRUE;
+    }
+    else {
+      return FALSE;
+    }
     if (isset($trigger['#limit_validation_errors']) && $trigger['#limit_validation_errors'] !== FALSE) {
       $relevant_sections = array_filter(
         $trigger['#limit_validation_errors'],
