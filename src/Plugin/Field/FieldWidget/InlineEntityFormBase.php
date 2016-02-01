@@ -412,7 +412,7 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
    */
   protected function isSubmitRelevant(array $form, FormStateInterface $form_state) {
     $field_name = $this->fieldDefinition->getName();
-    $field_parents = array_slice(array_merge($form['#parents'], [$field_name, 'form']), 0, -1);
+    $field_parents = array_slice(array_merge($form['#parents'], [$field_name, 'form']), 0, -2);
 
     $trigger = $form_state->getTriggeringElement();
     if (isset($trigger['#limit_validation_errors']) && $trigger['#limit_validation_errors'] !== FALSE) {
@@ -420,7 +420,7 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
         $trigger['#limit_validation_errors'],
         function ($item) use ($field_parents) {
           $union = $field_parents + $item;
-          return $union == max(count($item), count($field_parents));
+          return count($union) == max(count($item), count($field_parents));
         }
       );
 
