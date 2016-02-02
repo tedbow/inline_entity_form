@@ -256,4 +256,20 @@ class InlineEntityForm extends RenderElement {
     }
   }
 
+  /**
+   * Button #submit callback:  Closes all open child forms in the IEF widget.
+   *
+   * Used to ensure that forms in nested IEF widgets are properly closed
+   * when a parent IEF's form gets submitted or cancelled.
+   *
+   * @param $form
+   *   The IEF Form element.
+   * @param FormStateInterface $form_state
+   *   The form state of the parent form.
+   */
+  public static function closeChildForms($form, FormStateInterface &$form_state) {
+    $element = inline_entity_form_get_element($form, $form_state);
+    inline_entity_form_close_all_forms($element, $form_state);
+  }
+
 }

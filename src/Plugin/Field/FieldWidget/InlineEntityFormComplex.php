@@ -717,11 +717,11 @@ class InlineEntityFormComplex extends InlineEntityFormBase implements ContainerF
     if ($element['#op'] == 'add') {
       $element['actions']['ief_add_save']['#submit'] = [
         ['\Drupal\inline_entity_form\Element\InlineEntityForm', 'triggerIefSubmit'],
-        'inline_entity_form_close_child_forms',
+        ['\Drupal\inline_entity_form\Element\InlineEntityForm', 'closeChildForms'],
         'inline_entity_form_close_form',
       ];
       $element['actions']['ief_add_cancel']['#submit'] = [
-        'inline_entity_form_close_child_forms',
+        ['\Drupal\inline_entity_form\Element\InlineEntityForm', 'closeChildForms'],
         'inline_entity_form_close_form',
         'inline_entity_form_cleanup_form_state',
       ];
@@ -732,11 +732,11 @@ class InlineEntityFormComplex extends InlineEntityFormBase implements ContainerF
 
       $element['actions']['ief_edit_save']['#submit'] = [
         ['\Drupal\inline_entity_form\Element\InlineEntityForm', 'triggerIefSubmit'],
-        'inline_entity_form_close_child_forms',
+        ['\Drupal\inline_entity_form\Element\InlineEntityForm', 'closeChildForms'],
         [get_called_class(), 'submitCloseRow'],
       ];
       $element['actions']['ief_edit_cancel']['#submit'] = [
-        'inline_entity_form_close_child_forms',
+        ['\Drupal\inline_entity_form\Element\InlineEntityForm', 'closeChildForms'],
         [get_called_class(), 'submitCloseRow'],
         'inline_entity_form_cleanup_row_form_state',
       ];
