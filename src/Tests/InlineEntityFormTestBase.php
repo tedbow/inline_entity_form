@@ -13,7 +13,7 @@ use Drupal\simpletest\WebTestBase;
 /**
  * Base Class for Inline Entity Form Tests.
  */
-class InlineEntityFormTestBase extends WebTestBase{
+abstract class InlineEntityFormTestBase extends WebTestBase{
 
   /**
    * Gets IEF button name.
