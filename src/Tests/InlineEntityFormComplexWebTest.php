@@ -229,10 +229,14 @@ class InlineEntityFormComplexWebTest extends InlineEntityFormTestBase {
       $nested1_node = $this->drupalGetNodeByTitle($nested1_title);
       $this->assertEqual($nested1_title, $nested1_node->label(), "First node's title looks correct.");
       $this->assertEqual('ief_test_nested1', $nested1_node->bundle(), "First node's type looks correct.");
-      $this->assertEqual($nested2_title, $nested1_node->test_ref_nested1->entity->label(), "Second node's title looks correct.");
-      $this->assertEqual('ief_test_nested2', $nested1_node->test_ref_nested1->entity->bundle(), "Second node's type looks correct.");
-      $this->assertEqual($nested3_title, $nested1_node->test_ref_nested1->entity->test_ref_nested2->entity->label(), "Third node's title looks correct.");
-      $this->assertEqual('ief_test_nested3', $nested1_node->test_ref_nested1->entity->test_ref_nested2->entity->bundle(), "Third node's type looks correct.");
+      if ($this->assertNotNull($nested1_node->test_ref_nested1->entity, 'Second node was created.')) {
+        $this->assertEqual($nested2_title, $nested1_node->test_ref_nested1->entity->label(), "Second node's title looks correct.");
+        $this->assertEqual('ief_test_nested2', $nested1_node->test_ref_nested1->entity->bundle(), "Second node's type looks correct.");
+        if ($this->assertNotNull($nested1_node->test_ref_nested1->entity->test_ref_nested2->entity, 'Third node was created')) {
+          $this->assertEqual($nested3_title, $nested1_node->test_ref_nested1->entity->test_ref_nested2->entity->label(), "Third node's title looks correct.");
+          $this->assertEqual('ief_test_nested3', $nested1_node->test_ref_nested1->entity->test_ref_nested2->entity->bundle(), "Third node's type looks correct.");
+        }
+      }
     }
   }
 
