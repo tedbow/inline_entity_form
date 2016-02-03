@@ -17,6 +17,7 @@ use Drupal\Core\Field\WidgetBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Render\Element;
+use Drupal\inline_entity_form\Element\InlineEntityForm;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -715,11 +716,8 @@ class InlineEntityFormComplex extends InlineEntityFormBase implements ContainerF
 
     // Add submit handlers depending on operation.
     if ($element['#op'] == 'add') {
-      $element['actions']['ief_add_save']['#submit'] = [
-        ['\Drupal\inline_entity_form\Element\InlineEntityForm', 'triggerIefSubmit'],
-        ['\Drupal\inline_entity_form\Element\InlineEntityForm', 'closeChildForms'],
-        'inline_entity_form_close_form',
-      ];
+      InlineEntityForm::addSubmitCallbacks($element['actions']['ief_add_save']);
+      $element['actions']['ief_add_save']['#submit'][] = 'inline_entity_form_close_form';
       $element['actions']['ief_add_cancel']['#submit'] = [
         ['\Drupal\inline_entity_form\Element\InlineEntityForm', 'closeChildForms'],
         'inline_entity_form_close_form',
@@ -730,11 +728,8 @@ class InlineEntityFormComplex extends InlineEntityFormBase implements ContainerF
       $element['actions']['ief_edit_save']['#ief_row_delta'] = $element['#ief_row_delta'];
       $element['actions']['ief_edit_cancel']['#ief_row_delta'] = $element['#ief_row_delta'];
 
-      $element['actions']['ief_edit_save']['#submit'] = [
-        ['\Drupal\inline_entity_form\Element\InlineEntityForm', 'triggerIefSubmit'],
-        ['\Drupal\inline_entity_form\Element\InlineEntityForm', 'closeChildForms'],
-        [get_called_class(), 'submitCloseRow'],
-      ];
+      InlineEntityForm::addSubmitCallbacks($element['actions']['ief_edit_save']);
+      $element['actions']['ief_edit_save']['#submit'][] = [get_called_class(), 'submitCloseRow'];
       $element['actions']['ief_edit_cancel']['#submit'] = [
         ['\Drupal\inline_entity_form\Element\InlineEntityForm', 'closeChildForms'],
         [get_called_class(), 'submitCloseRow'],

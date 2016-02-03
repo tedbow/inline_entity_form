@@ -415,12 +415,15 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
     $field_parents = array_slice(array_merge($form['#parents'], [$field_name, 'form']), 0, -1);
 
     $trigger = $form_state->getTriggeringElement();
+    if (empty($trigger['#ief_trigger'])) {
+      return FALSE;
+    }
     if (isset($trigger['#limit_validation_errors']) && $trigger['#limit_validation_errors'] !== FALSE) {
       $relevant_sections = array_filter(
         $trigger['#limit_validation_errors'],
         function ($item) use ($field_parents) {
-          $union = $field_parents + $item;
-          return $union == max(count($item), count($field_parents));
+          $union = array($field_parents, $item);
+          return count($union) == max(count($item), count($field_parents));
         }
       );
 

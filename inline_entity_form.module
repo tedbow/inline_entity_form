@@ -86,11 +86,8 @@ function inline_entity_form_reference_form($handler, $reference_form, &$form_sta
       'callback' => 'inline_entity_form_get_element',
       'wrapper' => 'inline-entity-form-' . $reference_form['#ief_id'],
     ),
-    '#submit' => array(
-      ['\Drupal\inline_entity_form\Element\InlineEntityForm', 'triggerIefSubmit'],
-      'inline_entity_form_close_form',
-    ),
   );
+  InlineEntityForm::addSubmitCallbacks($reference_form['actions']['ief_reference_save']);
   $reference_form['actions']['ief_reference_cancel'] = array(
     '#type' => 'submit',
     '#value' => t('Cancel'),

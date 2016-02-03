@@ -153,6 +153,7 @@ class InlineEntityForm extends RenderElement {
         $complete_form['submit']['#submit'] = array_unique($complete_form['submit']['#submit'], SORT_REGULAR);
       }
       $complete_form['submit']['#ief_submit_all'] = TRUE;
+      $complete_form['submit']['#ief_trigger']  = TRUE;
       $submit_attached = TRUE;
     }
 
@@ -165,6 +166,7 @@ class InlineEntityForm extends RenderElement {
           $complete_form['actions'][$action]['#submit'] = array_merge([[get_called_class(), 'triggerIefSubmit']], $complete_form['actions'][$action]['#submit']);
           $complete_form['actions'][$action]['#submit'] = array_unique($complete_form['actions'][$action]['#submit'], SORT_REGULAR);
         }
+        $complete_form['actions'][$action]['#ief_trigger']  = TRUE;
         $complete_form['actions'][$action]['#ief_submit_all'] = TRUE;
         $submit_attached = TRUE;
       }
@@ -270,6 +272,14 @@ class InlineEntityForm extends RenderElement {
   public static function closeChildForms($form, FormStateInterface &$form_state) {
     $element = inline_entity_form_get_element($form, $form_state);
     inline_entity_form_close_all_forms($element, $form_state);
+  }
+
+  public static function addSubmitCallbacks(&$element) {
+    $element['#submit'] = [
+      ['\Drupal\inline_entity_form\Element\InlineEntityForm', 'triggerIefSubmit'],
+      'inline_entity_form_close_form',
+    ];
+    $element['#ief_trigger']  = TRUE;
   }
 
 }
