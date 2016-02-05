@@ -419,16 +419,12 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
       return FALSE;
     }
     if (isset($trigger['#limit_validation_errors']) && $trigger['#limit_validation_errors'] !== FALSE) {
-      $relevant_sections = array_filter(
-        $trigger['#limit_validation_errors'],
-        function ($item) use ($field_parents) {
-          $union = array($field_parents, $item);
-          return count($union) == max(count($item), count($field_parents));
+      foreach ($trigger['#limit_validation_errors'] as $limit_elements) {
+        foreach ($field_parents as $key => $field_parent) {
+          if ($field_parent != $limit_elements[$key]) {
+            return FALSE;
+          }
         }
-      );
-
-      if (empty($relevant_sections)) {
-        return FALSE;
       }
     }
 
