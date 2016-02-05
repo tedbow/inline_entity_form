@@ -274,10 +274,34 @@ class InlineEntityForm extends RenderElement {
     inline_entity_form_close_all_forms($element, $form_state);
   }
 
+  /**
+   * Button #submit callback: Closes a form in the IEF widget.
+   *
+   * @param $form
+   *   The complete parent form.
+   * @param $form_state
+   *   The form state of the parent form.
+   *
+   * @see inline_entity_form_open_form().
+   */
+  public static function closeForm($form, FormStateInterface $form_state) {
+    $element = inline_entity_form_get_element($form, $form_state);
+    $ief_id = $element['#ief_id'];
+
+    $form_state->setRebuild();
+    $form_state->set(['inline_entity_form', $ief_id, 'form'], NULL);
+  }
+
+
+  /**
+   * Add common submit callback functions and mark element as a IEF trigger.
+   *
+   * @param $element
+   */
   public static function addSubmitCallbacks(&$element) {
     $element['#submit'] = [
       ['\Drupal\inline_entity_form\Element\InlineEntityForm', 'triggerIefSubmit'],
-      'inline_entity_form_close_form',
+      ['\Drupal\inline_entity_form\Element\InlineEntityForm', 'closeForm'],
     ];
     $element['#ief_trigger']  = TRUE;
   }

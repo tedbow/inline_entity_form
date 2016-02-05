@@ -722,10 +722,9 @@ class InlineEntityFormComplex extends InlineEntityFormBase implements ContainerF
     // Add submit handlers depending on operation.
     if ($element['#op'] == 'add') {
       InlineEntityForm::addSubmitCallbacks($element['actions']['ief_add_save']);
-      $element['actions']['ief_add_save']['#submit'][] = 'inline_entity_form_close_form';
       $element['actions']['ief_add_cancel']['#submit'] = [
         ['\Drupal\inline_entity_form\Element\InlineEntityForm', 'closeChildForms'],
-        'inline_entity_form_close_form',
+        ['\Drupal\inline_entity_form\Element\InlineEntityForm', 'closeForm'],
         'inline_entity_form_cleanup_form_state',
       ];
     }

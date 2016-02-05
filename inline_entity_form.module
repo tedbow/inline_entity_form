@@ -97,7 +97,7 @@ function inline_entity_form_reference_form($handler, $reference_form, &$form_sta
       'callback' => 'inline_entity_form_get_element',
       'wrapper' => 'inline-entity-form-' . $reference_form['#ief_id'],
     ),
-    '#submit' => array('inline_entity_form_close_form'),
+    '#submit' => array(['\Drupal\inline_entity_form\Element\InlineEntityForm', 'closeForm'],),
   );
 
   $reference_form['#element_validate'][] = 'inline_entity_form_reference_form_validate';
@@ -204,24 +204,6 @@ function inline_entity_form_open_form($form, FormStateInterface $form_state) {
       'bundle' => $form_values['actions']['bundle'],
     ));
   }
-}
-
-/**
- * Button #submit callback: Closes a form in the IEF widget.
- *
- * @param $form
- *   The complete parent form.
- * @param $form_state
- *   The form state of the parent form.
- *
- * @see inline_entity_form_open_form().
- */
-function inline_entity_form_close_form($form, FormStateInterface $form_state) {
-  $element = inline_entity_form_get_element($form, $form_state);
-  $ief_id = $element['#ief_id'];
-
-  $form_state->setRebuild();
-  $form_state->set(['inline_entity_form', $ief_id, 'form'], NULL);
 }
 
 /**
