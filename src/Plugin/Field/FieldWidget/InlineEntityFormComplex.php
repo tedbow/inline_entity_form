@@ -614,7 +614,7 @@ class InlineEntityFormComplex extends InlineEntityFormBase implements ContainerF
       }
       $trigger = $form_state->getTriggeringElement();
 
-      if ($trigger['#ief_submit_all']) {
+      if (!empty($trigger['#ief_submit_all'])) {
         foreach ($values as $delta => &$item) {
           /** @var \Drupal\Core\Entity\EntityInterface $entity */
           $entity = $item['entity'];
