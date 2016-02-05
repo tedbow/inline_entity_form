@@ -612,18 +612,23 @@ class InlineEntityFormComplex extends InlineEntityFormBase implements ContainerF
           return SortArray::sortByKeyInt($a, $b, '_weight');
         });
       }
+      $trigger = $form_state->getTriggeringElement();
 
-      foreach ($values as $delta => &$item) {
-        /** @var \Drupal\Core\Entity\EntityInterface $entity */
-        $entity = $item['entity'];
-        if (!empty($item['needs_save'])) {
-          $entity->save();
-        }
-        if (!empty($item['delete'])) {
-          $entity->delete();
-          unset($items[$delta]);
+      if ($trigger['#ief_submit_all']) {
+        foreach ($values as $delta => &$item) {
+          /** @var \Drupal\Core\Entity\EntityInterface $entity */
+          $entity = $item['entity'];
+          if (!empty($item['needs_save'])) {
+            $entity->save();
+          }
+          if (!empty($item['delete'])) {
+            $entity->delete();
+            unset($items[$delta]);
+          }
         }
       }
+
+
 
       // Let the widget massage the submitted values.
       $values = $this->massageFormValues($values, $form, $form_state);
