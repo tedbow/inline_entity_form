@@ -411,24 +411,8 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
    *   TRUE if current submit is relevant for this IEF widget and FALSE if not.
    */
   protected function isSubmitRelevant(array $form, FormStateInterface $form_state) {
-    $field_name = $this->fieldDefinition->getName();
-    $field_parents = array_slice(array_merge($form['#parents'], [$field_name, 'form']), 0, -1);
-
     $trigger = $form_state->getTriggeringElement();
-    if (empty($trigger['#ief_trigger'])) {
-      return FALSE;
-    }
-    if (isset($trigger['#limit_validation_errors']) && $trigger['#limit_validation_errors'] !== FALSE) {
-      foreach ($trigger['#limit_validation_errors'] as $limit_elements) {
-        foreach ($field_parents as $key => $field_parent) {
-          if ($field_parent != $limit_elements[$key]) {
-            return FALSE;
-          }
-        }
-      }
-    }
-
-    return TRUE;
+    return !empty($trigger['#ief_trigger']);
   }
 
 }
