@@ -81,7 +81,7 @@ class InlineEntityFormWebTest extends InlineEntityFormTestBase {
     $cardinality_options = [
       1 => 1,
       2 => 2,
-      FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED => 1,
+      FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED => 3,
     ];
     foreach ($cardinality_options as $cardinality => $limit) {
       /** @var \Drupal\field\FieldStorageConfigInterface $field_storage */
@@ -95,12 +95,34 @@ class InlineEntityFormWebTest extends InlineEntityFormTestBase {
       $this->assertText('Single node', 'Inline entity field widget title found.');
       $this->assertText('Reference a single node.', 'Inline entity field description found.');
 
+      $add_more_xpath = '//input[@data-drupal-selector="edit-single-add-more"]';
+      if ($cardinality == FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED) {
+        $this->assertFieldByXPath($add_more_xpath, NULL,'Add more button exists');
+      }
+      else {
+        $this->assertNoFieldByXPath($add_more_xpath, NULL, 'Add more button does NOT exist');
+      }
+
       $edit = ['title[0][value]' => 'Host node'];
       for ($item_number = 0; $item_number < $limit; $item_number++) {
         $edit["single[$item_number][inline_entity_form][title][0][value]"] = 'Child node nr.' . $item_number;
-      }
+        if ($cardinality == FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED) {
+          $next_item_number = $item_number + 1;
+          $this->assertNoFieldByName("single[$next_item_number][inline_entity_form][title][0][value]", NULL, "Item $next_item_number does not appear before 'Add More' clicked");
+          if ($item_number < $limit - 1) {
+            $this->drupalPostAjaxForm(NULL, $edit, 'single_add_more');
+            // This needed because the first time "add another item" is clicked it does not work
+            // see https://www.drupal.org/node/2664626
+            if ($item_number == 0) {
+              $this->drupalPostAjaxForm(NULL, $edit, 'single_add_more');
+            }
 
-      $this->drupalPostForm('node/add/ief_simple_single', $edit, t('Save'));
+            $this->assertFieldByName("single[$next_item_number][inline_entity_form][title][0][value]", NULL, "Item $next_item_number does  appear after 'Add More' clicked");
+          }
+
+        }
+      }
+      $this->drupalPostForm(NULL, $edit, t('Save'));
 
       for ($item_number = 0; $item_number < $limit; $item_number++) {
         $this->assertText('Child node nr.' . $item_number, 'Label of referenced entity found.');
