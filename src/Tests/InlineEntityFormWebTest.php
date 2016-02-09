@@ -152,7 +152,8 @@ class InlineEntityFormWebTest extends InlineEntityFormTestBase {
     $this->assertText('Title field is required.', 'Title validation fires on Inline Entity Form widget.');
     $this->assertUrl('node/add/ief_simple_single', [], 'On add page after validation error.');
 
-    $edit['single[0][inline_entity_form][title][0][value]'] = 'Child node';
+    $child_title = 'Child node ' . $this->randomString();
+    $edit['single[0][inline_entity_form][title][0][value]'] = $child_title;
     $edit['single[0][inline_entity_form][positive_int][0][value]'] = -1;
     $this->drupalPostForm(NULL, $edit, t('Save'));
     $this->assertNoText('Title field is required.', 'Title validation passes on Inline Entity Form widget.');
@@ -164,9 +165,16 @@ class InlineEntityFormWebTest extends InlineEntityFormTestBase {
     $this->assertNoText('Title field is required.', 'Title validation passes on Inline Entity Form widget.');
     $this->assertNoText('Positive int must be higher than or equal to 1', 'Field validation fires on Inline Entity Form widget.');
 
+    // Check that nodes were created correctly.
     $host_node = $this->getNodeByTitle($host_node_title);
     if ($this->assertNotNull($host_node, 'Host node created.')) {
       $this->assertUrl('node/' . $host_node->id(), [], 'On node view page after node add.');
+      $child_node = $this->getNodeByTitle($child_title);
+      if ($this->assertNotNull($child_node)) {
+        $this->assertEqual($host_node->single[0]->target_id, $child_node->id(), 'Child node is referenced');
+        $this->assertEqual($child_node->positive_int[0]->value,1, 'Child node int field correct.');
+        $this->assertEqual($child_node->bundle(),'ief_test_custom', 'Child node is correct bundle.');
+      }
     }
   }
 
