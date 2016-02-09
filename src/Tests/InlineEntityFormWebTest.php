@@ -75,21 +75,23 @@ class InlineEntityFormWebTest extends InlineEntityFormTestBase {
   }
 
   /**
-   * Tests simple IEF widget with single-value field.
+   * Tests simple IEF widget with different cardinality options.
+   *
+   * @throws \Exception
    */
-  public function testSimpleSingle() {
+  protected function testSimpleCardinalityOptions() {
+    $this->drupalLogin($this->user);
     $cardinality_options = [
       1 => 1,
       2 => 2,
       FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED => 3,
     ];
+    /** @var \Drupal\field\FieldStorageConfigInterface $field_storage */
+    $field_storage = $this->fieldStorageConfigStorage->load('node.single');
     foreach ($cardinality_options as $cardinality => $limit) {
-      /** @var \Drupal\field\FieldStorageConfigInterface $field_storage */
-      $field_storage = $this->fieldStorageConfigStorage->load('node.single');
       $field_storage->setCardinality($cardinality);
       $field_storage->save();
 
-      $this->drupalLogin($this->user);
       $this->drupalGet('node/add/ief_simple_single');
 
       $this->assertText('Single node', 'Inline entity field widget title found.');
@@ -97,7 +99,7 @@ class InlineEntityFormWebTest extends InlineEntityFormTestBase {
 
       $add_more_xpath = '//input[@data-drupal-selector="edit-single-add-more"]';
       if ($cardinality == FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED) {
-        $this->assertFieldByXPath($add_more_xpath, NULL,'Add more button exists');
+        $this->assertFieldByXPath($add_more_xpath, NULL, 'Add more button exists');
       }
       else {
         $this->assertNoFieldByXPath($add_more_xpath, NULL, 'Add more button does NOT exist');
@@ -127,6 +129,44 @@ class InlineEntityFormWebTest extends InlineEntityFormTestBase {
       for ($item_number = 0; $item_number < $limit; $item_number++) {
         $this->assertText('Child node nr.' . $item_number, 'Label of referenced entity found.');
       }
+    }
+  }
+
+  /**
+   * Test Validation on Simple Widget.
+   *
+   * @throws \Exception
+   */
+  protected function testSimpleValidation() {
+    $this->drupalLogin($this->user);
+    $host_node_title = 'Host Validation Node';
+    $this->drupalGet('node/add/ief_simple_single');
+
+    $this->assertText('Single node', 'Inline entity field widget title found.');
+    $this->assertText('Reference a single node.', 'Inline entity field description found.');
+    $this->assertText('Positive int', 'Positive int field found.');
+
+    $edit = ['title[0][value]' => $host_node_title];
+    $this->drupalPostForm(NULL, $edit, t('Save'));
+
+    $this->assertText('Title field is required.', 'Title validation fires on Inline Entity Form widget.');
+    $this->assertUrl('node/add/ief_simple_single', [], 'On add page after validation error.');
+
+    $edit['single[0][inline_entity_form][title][0][value]'] = 'Child node';
+    $edit['single[0][inline_entity_form][positive_int][0][value]'] = -1;
+    $this->drupalPostForm(NULL, $edit, t('Save'));
+    $this->assertNoText('Title field is required.', 'Title validation passes on Inline Entity Form widget.');
+    $this->assertText('Positive int must be higher than or equal to 1', 'Field validation fires on Inline Entity Form widget.');
+    $this->assertUrl('node/add/ief_simple_single', [], 'On add page after validation error.');
+
+    $edit['single[0][inline_entity_form][positive_int][0][value]'] = 1;
+    $this->drupalPostForm(NULL, $edit, t('Save'));
+    $this->assertNoText('Title field is required.', 'Title validation passes on Inline Entity Form widget.');
+    $this->assertNoText('Positive int must be higher than or equal to 1', 'Field validation fires on Inline Entity Form widget.');
+
+    $host_node = $this->getNodeByTitle($host_node_title);
+    if ($this->assertNotNull($host_node, 'Host node created.')) {
+      $this->assertUrl('node/' . $host_node->id(), [], 'On node view page after node add.');
     }
   }
 
