@@ -12,11 +12,9 @@ use Drupal\Core\Entity\EntityFormInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
-use Drupal\Core\Field\EntityReferenceFieldItemListInterface;
 use Drupal\Core\Field\WidgetBase;
 use Drupal\Core\Form\FormState;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\TypedData\TypedDataManagerInterface;
 use Drupal\inline_entity_form\InlineFormInterface;
 use Drupal\Core\Entity\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -80,16 +78,32 @@ class EntityInlineForm implements InlineFormInterface {
     );
   }
 
+  /**
+   * Gets the IEF id for a form element.
+   *
+   * @param $element
+   *
+   * @return string
+   */
   public static function getElementIEFId($element) {
     if (isset($element['#ief_id'])) {
       return $element['#ief_id'];
     }
+    // @todo Make sure that all buttons have #ief_id set so below is not necessary.
     if (strpos($element['#name'], 'ief-add-submit-') === 0) {
       return str_replace('ief-add-submit-', '', $element['#name']);
     }
     return '';
   }
 
+  /**
+   * Determine if the form was submitted by an element for this IEF Form.
+   * 
+   * @param array $entity_form
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *
+   * @return bool
+   */
   public static function triggeredByCurrent(array $entity_form, FormStateInterface $form_state) {
     $trigger_ief_id = static::getElementIEFId($form_state->getTriggeringElement());
     return $trigger_ief_id == $entity_form['#ief_id'];

@@ -144,7 +144,6 @@ class InlineEntityForm extends RenderElement {
     $submit = array_merge([[get_called_class(), 'triggerIefSubmit']], $complete_form['#submit']);
     $submit = array_unique($submit, SORT_REGULAR);
 
-
     if (!empty($complete_form['submit'])) {
       if (empty($complete_form['submit']['#submit'])) {
         $complete_form['submit']['#submit'] = $submit;
@@ -155,7 +154,7 @@ class InlineEntityForm extends RenderElement {
       }
       $complete_form['submit']['#ief_submit_all'] = TRUE;
       $complete_form['submit']['#ief_trigger']  = TRUE;
-       $submit_attached = TRUE;
+      $submit_attached = TRUE;
     }
 
     foreach (['submit', 'publish', 'unpublish'] as $action) {
@@ -179,7 +178,6 @@ class InlineEntityForm extends RenderElement {
       static::recurseAttachMainSubmit($complete_form, $submit);
     }
   }
-
 
   /**
    * Attaches IEF submit callback to primary submit element on a form.
