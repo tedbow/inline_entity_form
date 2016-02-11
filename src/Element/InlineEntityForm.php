@@ -144,7 +144,6 @@ class InlineEntityForm extends RenderElement {
     $submit = array_merge([[get_called_class(), 'triggerIefSubmit']], $complete_form['#submit']);
     $submit = array_unique($submit, SORT_REGULAR);
 
-    $complete_form['#validate'][] = ['Drupal\inline_entity_form\Element\InlineEntityForm', 'validateTopLevel'];
 
     if (!empty($complete_form['submit'])) {
       if (empty($complete_form['submit']['#submit'])) {
@@ -156,7 +155,6 @@ class InlineEntityForm extends RenderElement {
       }
       $complete_form['submit']['#ief_submit_all'] = TRUE;
       $complete_form['submit']['#ief_trigger']  = TRUE;
-      $complete_form['submit']['#validate'][] = ['Drupal\inline_entity_form\Element\InlineEntityForm', 'validateTopLevel'];
        $submit_attached = TRUE;
     }
 
@@ -171,7 +169,6 @@ class InlineEntityForm extends RenderElement {
         }
         $complete_form['actions'][$action]['#ief_trigger']  = TRUE;
         $complete_form['actions'][$action]['#ief_submit_all'] = TRUE;
-        $complete_form['actions'][$action]['#validate'][] = ['Drupal\inline_entity_form\Element\InlineEntityForm', 'validateTopLevel'];
         $submit_attached = TRUE;
       }
     }
@@ -183,12 +180,6 @@ class InlineEntityForm extends RenderElement {
     }
   }
 
-  public static function validateTopLevel(array $form, FormStateInterface $form_state) {
-    $form_state->getFormObject()->validateForm($form, $form_state);
-    $errors = $form_state->getErrors();
-
-   // $form_state->clearErrors();
-  }
 
   /**
    * Attaches IEF submit callback to primary submit element on a form.
