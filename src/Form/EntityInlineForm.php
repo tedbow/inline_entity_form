@@ -7,13 +7,16 @@
 namespace Drupal\inline_entity_form\Form;
 
 use Drupal\Core\Entity\ContentEntityInterface;
+use Drupal\Core\Entity\Entity;
 use Drupal\Core\Entity\EntityFormInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\Core\Field\EntityReferenceFieldItemListInterface;
 use Drupal\Core\Field\WidgetBase;
 use Drupal\Core\Form\FormState;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\TypedData\TypedDataManagerInterface;
 use Drupal\inline_entity_form\InlineFormInterface;
 use Drupal\Core\Entity\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -75,6 +78,25 @@ class EntityInlineForm implements InlineFormInterface {
       $container->get('module_handler'),
       $entity_type->id()
     );
+  }
+
+  public static function getElementIEFId($element) {
+    if (isset($element['#ief_id'])) {
+      return $element['#ief_id'];
+    }
+    if (strpos($element['#name'], 'ief-add-submit-') === 0) {
+      return str_replace('ief-add-submit-', '', $element['#name']);
+    }
+    return '';
+  }
+
+  public static function triggeredByCurrent(array $entity_form, FormStateInterface $form_state) {
+    $trigger_ief_id = static::getElementIEFId($form_state->getTriggeringElement());
+    return $trigger_ief_id == $entity_form['#ief_id'];
+  }
+
+  protected static function filterIEFRequiredErrors($entity_form, FormStateInterface $child_form_state) {
+    //$child_form_state->clearErrors();
   }
 
   /**
@@ -166,10 +188,47 @@ class EntityInlineForm implements InlineFormInterface {
     $entity_form['#ief_element_submit'][] = [get_class($this), 'entityFormSubmit'];
     $entity_form['#ief_element_submit'][] = [get_class($this), 'submitCleanFormState'];
 
+    $entity_form['#entity_builders'][] = [get_class($this), 'buildInlineEntity'];
+
     // Allow other modules to alter the form.
     $this->moduleHandler->alter('inline_entity_form_entity_form', $entity_form, $form_state);
 
     return $entity_form;
+  }
+
+  public static function buildInlineEntity($entity_type_id, Entity $entity, array &$form, FormStateInterface &$form_state) {
+    if (static::triggeredByCurrent($form, $form_state)) {
+      $a = 'b';
+      $fields = $entity->getFields();
+      if (isset($fields['test_ref_nested2'])) {
+        return;
+
+        /** @var EntityReferenceFieldItemListInterface $field */
+        $field = $fields['test_ref_nested2'];
+        $entity->set('test_ref_nested2', NULL);
+
+        $constraints = $field->getConstraints();
+        /** @var TypedDataManagerInterface $data */
+        $data = $field->getTypedDataManager();
+        //$field->setTypedDataManager();
+        $def = $field->getFieldDefinition();
+        /** @var \Drupal\Core\TypedData\TypedDataManager $data_manager */
+        $data_manager = \Drupal::service('typed_data_manager');
+        //$field->setTypedDataManager($data_manager->createInstance('entity', []));
+
+        foreach ($field as $item) {
+          $a = 'b';
+        }
+        /** @var \Symfony\Component\Validator\Constraint $constraint */
+        foreach ($constraints as &$constraint) {
+          unset($constraint);
+
+        }
+
+
+      }
+    }
+
   }
 
   /**
@@ -183,7 +242,11 @@ class EntityInlineForm implements InlineFormInterface {
     $validate = TRUE;
     if (empty($triggering_element['#ief_submit_all'])) {
       $element_name = end($triggering_element['#array_parents']);
-      $validate = in_array($element_name, ['ief_add_save', 'ief_edit_save']);
+      $trigger_ief_id = static::getElementIEFId($triggering_element);
+      $validate = in_array($element_name, ['ief_add_save', 'ief_edit_save'])
+        && static::triggeredByCurrent($entity_form, $form_state);
+      $instance = $form_state->get(['inline_entity_form', $entity_form['#ief_id'], 'instance']);
+
     }
 
     if ($validate) {
@@ -195,6 +258,7 @@ class EntityInlineForm implements InlineFormInterface {
       $controller = $form_state->get(['inline_entity_form', $entity_form['#ief_id'], 'entity_form']);
       $child_form_state = static::buildChildFormState($controller, $form_state, $entity, $operation, $entity_form['#parents']);
       $entity_form['#entity'] = $controller->validateForm($entity_form, $child_form_state);
+      static::filterIEFRequiredErrors($entity_form, $child_form_state);
 
       // TODO - this is field-only part of the code. Figure out how to refactor.
       if ($child_form_state->has(['inline_entity_form', $entity_form['#ief_id']])) {
@@ -359,7 +423,8 @@ class EntityInlineForm implements InlineFormInterface {
    * After field_attach_submit() has run and the form has been closed, the form
    * state still contains field data in $form_state->get('field'). Unless that
    * data is removed, the next form with the same #parents (reopened add form,
-   * for example) will contain data (i.e. uploaded files) from the previous form.
+   * for example) will contain data (i.e. uploaded files) from the previous
+   * form.
    *
    * @param $entity_form
    *   The entity form.
