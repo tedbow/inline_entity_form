@@ -98,7 +98,7 @@ class EntityInlineForm implements InlineFormInterface {
 
   /**
    * Determine if the form was submitted by an element for this IEF Form.
-   * 
+   *
    * @param array $entity_form
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *
@@ -215,7 +215,6 @@ class EntityInlineForm implements InlineFormInterface {
     $validate = TRUE;
     if (empty($triggering_element['#ief_submit_all'])) {
       $element_name = end($triggering_element['#array_parents']);
-      $trigger_ief_id = static::getElementIEFId($triggering_element);
       $validate = in_array($element_name, ['ief_add_save', 'ief_edit_save'])
         && static::triggeredByCurrent($entity_form, $form_state);
 
