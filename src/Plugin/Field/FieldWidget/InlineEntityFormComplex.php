@@ -595,6 +595,9 @@ class InlineEntityFormComplex extends InlineEntityFormBase implements ContainerF
     }
 
     if ($key_exists) {
+      if (empty($values['entities']) && !empty($values['entity'])) {
+        $values['entities'] = [['entity' => $values['entity']]];
+      }
       $values = $values['entities'];
 
       // Account for drag-and-drop reordering if needed.
