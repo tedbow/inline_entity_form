@@ -204,8 +204,6 @@ class InlineEntityFormComplexWebTest extends InlineEntityFormTestBase {
       $nested2_title = 'nested2 title steps ' . ($required ? 'required' : 'not required');
       $nested1_title = 'nested1 title steps ' . ($required ? 'required' : 'not required');
       $edit = [
-        // First line shouldn't be needed. It needs to be here because of a bug. See: https://www.drupal.org/node/2649706
-        'test_ref_nested1[form][inline_entity_form][title][0][value]' => $nested2_title,
         'test_ref_nested1[form][inline_entity_form][test_ref_nested2][form][inline_entity_form][title][0][value]' => $nested3_title,
       ];
       $this->drupalPostAjaxForm(NULL, $edit, $this->getButtonName('//input[@type="submit" and @value="Create node 3"]'));
