@@ -194,8 +194,7 @@ class InlineEntityFormComplexWebTest extends InlineEntityFormTestBase {
   public function testNestedEntityCreationWithDifferentBundlesAjaxSubmit() {
     $required_possibilities = [
       FALSE,
-      // Fails because of a known bug. See: https://www.drupal.org/node/2649710
-      // TRUE,
+      TRUE,
     ];
     foreach ($required_possibilities as $required) {
       $this->setupNestedComplexForm($required);
@@ -246,8 +245,7 @@ class InlineEntityFormComplexWebTest extends InlineEntityFormTestBase {
   public function testNestedEntityCreationWithDifferentBundlesNoAjaxSubmit() {
     $required_possibilities = [
       FALSE,
-      // Fails because of a known bug. See: https://www.drupal.org/node/2649710
-      // TRUE,
+      TRUE,
     ];
 
     foreach ($required_possibilities as $required) {
