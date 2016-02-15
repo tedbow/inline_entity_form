@@ -177,4 +177,35 @@ class InlineEntityFormSimpleWebTest extends InlineEntityFormTestBase {
     }
   }
 
+  /**
+   * Check that Simple IEF widget sets owner of nodes correctly when user
+   * explicitly changes owner in parent.
+   */
+  public function testOverrideOwner() {
+    // Create a user with 'administer nodes' so author can be set.
+    $this->user = $this->createUser([
+      'create ief_simple_single content',
+      'edit any ief_simple_single content',
+      'edit any ief_test_custom content',
+      'administer nodes',
+    ]);
+    $other_user = $this->createUser([
+      'access content',
+    ]);
+
+    $this->drupalLogin($this->user);
+    $this->drupalGet('node/add/ief_simple_single');
+    $host_title = 'Host Node';
+    $edit = ['title[0][value]' => $host_title];
+    $child_title = 'Child node ' . $this->randomString();
+    $edit['single[0][inline_entity_form][title][0][value]'] = $child_title;
+    $edit['uid[0][target_id]'] = "{$other_user->label()} ({$other_user->id()})";
+    $this->drupalPostForm(NULL, $edit, t('Save and publish'));
+
+    $host_node = $this->getNodeByTitle($host_title);
+    $this->assertEqual($other_user->id(), $host_node->getOwnerId(), 'Host node owner set correctly');
+    $child_node = $this->getNodeByTitle($child_title);
+    $this->assertEqual($other_user->id(), $child_node->getOwnerId(), 'Child node owner set correctly');
+  }
+
 }
