@@ -177,4 +177,25 @@ class InlineEntityFormSimpleWebTest extends InlineEntityFormTestBase {
     }
   }
 
+  /**
+   * Check that Simple IEF widget does not have extra field when the user has
+   * node admin permissions.
+   */
+  public function testAdminForm() {
+    $this->user = $this->createUser([
+      'create ief_simple_single content',
+      'edit any ief_simple_single content',
+      'edit any ief_test_custom content',
+      'view own unpublished content',
+      'administer nodes',
+    ]);
+    $this->drupalLogin($this->user);
+    $this->drupalGet('node/add/ief_simple_single');
+    $this->assertNoFieldByName('single[0][inline_entity_form][revision]', NULL, 'Revision checkbox for ief not found on form.');
+    $this->assertNoFieldByName('single[0][inline_entity_form][uid][0][target_id]', NULL, 'Authored by for Inline Entity Form field not found on form.');
+    $this->assertNoFieldByName('single[0][inline_entity_form][created][0][value][date]', NULL, 'Create date for Inline Entity Form field not found on form.');
+    $this->assertNoFieldByName('single[0][inline_entity_form][promote][value]', NULL, 'Promoted checkbox for Inline Entity Form field not found on form.');
+    $this->assertNoFieldByName('single[0][inline_entity_form][sticky][value]', NULL, 'Sticky checkbox for Inline Entity Form field not found on form.');
+  }
+
 }
