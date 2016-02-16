@@ -205,7 +205,7 @@ class InlineEntityFormSimpleWebTest extends InlineEntityFormTestBase {
     $host_node = $this->getNodeByTitle($host_title);
     $this->assertEqual($other_user->id(), $host_node->getOwnerId(), 'Host node owner set correctly');
     $child_node = $this->getNodeByTitle($child_title);
-    $this->assertEqual($other_user->id(), $child_node->getOwnerId(), 'Child node owner set correctly');
+    $this->assertEqual($this->user->id(), $child_node->getOwnerId(), 'Child node owner set correctly');
   }
 
 }
