@@ -1,0 +1,11 @@
+uuid: 6655594e-b624-4fca-a200-aed414a066fd
+langcode: en
+status: true
+dependencies: {  }
+name: 'IEF User Complex'
+type: ief_user_complex
+description: 'Content type for IEF with Users.'
+help: ''
+new_revision: false
+preview_mode: 1
+display_submitted: true

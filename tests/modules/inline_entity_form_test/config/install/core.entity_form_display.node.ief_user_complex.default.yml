@@ -1,0 +1,59 @@
+uuid: 9f6d6587-76d3-4183-aa00-b8394f7bd07f
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.node.ief_user_complex.ief_user
+    - node.type.ief_user_complex
+  module:
+    - inline_entity_form
+    - text
+id: node.ief_user_complex.default
+targetEntityType: node
+bundle: ief_user_complex
+mode: default
+content:
+  created:
+    type: datetime_timestamp
+    weight: 10
+    settings: {  }
+    third_party_settings: {  }
+  ief_user:
+    type: inline_entity_form_complex
+    weight: 27
+    settings:
+      label_singular: ''
+      label_plural: ''
+      override_labels: false
+      allow_new: true
+      allow_existing: false
+      match_operator: CONTAINS
+    third_party_settings: {  }
+  promote:
+    type: boolean_checkbox
+    settings:
+      display_label: true
+    weight: 15
+    third_party_settings: {  }
+  sticky:
+    type: boolean_checkbox
+    settings:
+      display_label: true
+    weight: 16
+    third_party_settings: {  }
+  title:
+    type: string_textfield
+    weight: -5
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  uid:
+    type: entity_reference_autocomplete
+    weight: 5
+    settings:
+      match_operator: CONTAINS
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+hidden: {  }

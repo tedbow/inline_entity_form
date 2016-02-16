@@ -1,0 +1,27 @@
+uuid: 3b3c8b51-954f-4440-aa00-db64142cf7b3
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.ief_user
+    - node.type.ief_user_complex
+id: node.ief_user_complex.ief_user
+field_name: ief_user
+entity_type: node
+bundle: ief_user_complex
+label: User
+description: ''
+required: true
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:user'
+  handler_settings:
+    include_anonymous: true
+    filter:
+      type: _none
+    target_bundles: null
+    sort:
+      field: _none
+field_type: entity_reference
