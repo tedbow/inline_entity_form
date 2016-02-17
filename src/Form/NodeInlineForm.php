@@ -50,25 +50,4 @@ class NodeInlineForm extends EntityInlineForm {
     return $fields;
   }
 
-  /**
-   * {@inheritdoc}
-   */
-  public function entityForm($entity_form, FormStateInterface $form_state) {
-    $entity_form = parent::entityForm($entity_form, $form_state);
-
-    foreach (Element::children($entity_form) as $key) {
-      if (isset($entity_form[$key]['#group'])) {
-        // Unset element if it is in 'advanced' group or
-        // its parent group is in 'advanced'
-        if ($entity_form[$entity_form[$key]['#group']] == 'advanced'
-          || (isset($entity_form[$entity_form[$key]['#group']]['#group'])
-            && $entity_form[$entity_form[$key]['#group']]['#group'] == 'advanced')
-        ) {
-          unset($entity_form[$key]);
-        }
-      }
-    }
-    return $entity_form;
-  }
-
 }

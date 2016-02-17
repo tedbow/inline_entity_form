@@ -6,6 +6,7 @@
 
 namespace Drupal\inline_entity_form\Form;
 
+use Drupal\Core\Entity\ContentEntityFormInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityFormInterface;
 use Drupal\Core\Entity\EntityInterface;
@@ -140,13 +141,19 @@ class EntityInlineForm implements InlineFormInterface {
    */
   public function entityForm($entity_form, FormStateInterface $form_state) {
     $operation = 'default';
-    $controller = $this->entityManager->getFormObject($entity_form['#entity']->getEntityTypeId(), $operation, FALSE);
+    $controller = $this->entityManager->getFormObject($entity_form['#entity']->getEntityTypeId(), $operation);
     $controller->setEntity($entity_form['#entity']);
     $form_state->set(['inline_entity_form', $entity_form['#ief_id'], 'entity_form'], $controller);
 
     $child_form_state = $this->buildChildFormState($controller, $form_state, $entity_form['#entity'], $operation, $entity_form['#parents']);
 
-    $entity_form = $controller->buildForm($entity_form, $child_form_state);
+    if ($controller instanceof ContentEntityFormInterface) {
+      $controller->getFormDisplay($child_form_state)->buildForm($entity_form['#entity'], $entity_form, $child_form_state);
+    }
+    else {
+      $entity_form = $controller->buildForm($entity_form, $child_form_state);
+    }
+
 
     if (!$entity_form['#display_actions']) {
       unset($entity_form['actions']);
