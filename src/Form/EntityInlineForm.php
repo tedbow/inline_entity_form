@@ -6,6 +6,7 @@
 
 namespace Drupal\inline_entity_form\Form;
 
+use Drupal\Core\Entity\ContentEntityForm;
 use Drupal\Core\Entity\ContentEntityFormInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
@@ -19,12 +20,14 @@ use Drupal\Core\Field\WidgetBase;
 use Drupal\Core\Form\FormState;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\inline_entity_form\InlineFormInterface;
+use Drupal\Core\Entity\EntityManagerInterface;
+use Drupal\inline_entity_form\InlineFormState;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Generic entity inline form handler.
  */
-class EntityInlineForm implements InlineFormInterface {
+class EntityInlineForm extends ContentEntityForm implements InlineFormInterface {
 
   /**
    * The entity field manager.
@@ -151,13 +154,12 @@ class EntityInlineForm implements InlineFormInterface {
 
     /** @var ContentEntityInterface $entity */
     $entity = $entity_form['#entity'];
-    $controller = $this->entityManager->getFormObject($entity->getEntityTypeId(), $operation);
-    $controller->setEntity($entity);
+    $this->setEntity($entity);
+    $form_state->set(['inline_entity_form', $entity_form['#ief_id'], 'entity_form'], $this);
 
-    $form_state->set(['inline_entity_form', $entity_form['#ief_id'], 'entity_form'], $controller);
-
-    $form_display = EntityFormDisplay::collectRenderDisplay($entity, 'default');
-    $form_display->buildForm($entity, $entity_form, $form_state);
+    $form_display = EntityFormDisplay::collectRenderDisplay($entity, $operation);
+    $inline_form_state = new InlineFormState($this, $form_state, $entity_form['#entity'], $operation, $entity_form['#parents']);
+    $form_display->buildForm($entity, $entity_form, $inline_form_state);
 
     if (!$entity_form['#display_actions']) {
       unset($entity_form['actions']);
@@ -195,15 +197,15 @@ class EntityInlineForm implements InlineFormInterface {
 
       /** @var \Drupal\Core\Entity\EntityFormInterface $controller */
       $controller = $form_state->get(['inline_entity_form', $entity_form['#ief_id'], 'entity_form']);
-      $child_form_state = static::buildChildFormState($controller, $form_state, $entity, $operation, $entity_form['#parents']);
-      $entity_form['#entity'] = $controller->validateForm($entity_form, $child_form_state);
+      $inline_form_state = new InlineFormState($controller, $form_state, $entity, $operation, $entity_form['#parents']);
+      $entity_form['#entity'] = $controller->validateForm($entity_form, $inline_form_state);
 
       // TODO - this is field-only part of the code. Figure out how to refactor.
-      if ($child_form_state->has(['inline_entity_form', $entity_form['#ief_id']])) {
+      if ($inline_form_state->has(['inline_entity_form', $entity_form['#ief_id']])) {
         $form_state->set(['inline_entity_form', $entity_form['#ief_id'], 'entity'], $entity_form['#entity']);
       }
 
-      foreach($child_form_state->getErrors() as $name => $message) {
+      foreach($inline_form_state->getErrors() as $name => $message) {
         // $name may be unknown in $form_state and
         // $form_state->setErrorByName($name, $message) may suppress the error message.
         $form_state->setError($triggering_element, $message);
@@ -231,21 +233,21 @@ class EntityInlineForm implements InlineFormInterface {
     /** @var \Drupal\Core\Entity\EntityInterface $entity */
     $entity = $entity_form['#entity'];
     $operation = 'default';
-    /** @var \Drupal\Core\Entity\EntityFormInterface $controller */
+    /** @var ContentEntityFormInterface $controller */
     $controller = $form_state->get(['inline_entity_form', $entity_form['#ief_id'], 'entity_form']);
     $controller->setEntity($entity);
 
-    $child_form_state = static::buildChildFormState($controller, $form_state, $entity, $operation, $entity_form['#parents']);
+    $inline_form_state = new InlineFormState($controller, $form_state, $entity, $operation, $entity_form['#parents']);
     $child_form = $entity_form;
     $child_form['#ief_parents'] = $entity_form['#parents'];
-    $controller->submitForm($child_form, $child_form_state);
+    $controller->submitForm($child_form, $inline_form_state);
     $entity = $entity_form['#entity'] = $controller->getEntity();
 
     // Invoke all specified builders for copying form values to entity
     // properties.
     if (isset($entity_form['#entity_builders'])) {
       foreach ($entity_form['#entity_builders'] as $function) {
-        call_user_func_array($function, [$entity->getEntityTypeId(), $entity, &$child_form, &$child_form_state]);
+        call_user_func_array($function, [$entity->getEntityTypeId(), $entity, &$child_form, &$inline_form_state]);
       }
     }
     if ($entity instanceof ContentEntityInterface) {
@@ -256,7 +258,7 @@ class EntityInlineForm implements InlineFormInterface {
       $entity->save();
     }
     // TODO - this is field-only part of the code. Figure out how to refactor.
-    if ($child_form_state->has(['inline_entity_form', $entity_form['#ief_id']])) {
+    if ($inline_form_state->has(['inline_entity_form', $entity_form['#ief_id']])) {
       $form_state->set(['inline_entity_form', $entity_form['#ief_id'], 'entity'], $entity);
     }
   }
@@ -268,94 +270,6 @@ class EntityInlineForm implements InlineFormInterface {
     $storage_handler = $this->entityTypeManager->getStorage($this->entityType->id());
     $entities = $storage_handler->loadMultiple($ids);
     $storage_handler->delete($entities);
-  }
-
-  /**
-   * Build all necessary things for child form (form state, etc.).
-   *
-   * @param \Drupal\Core\Entity\EntityFormInterface $controller
-   *   Entity form controller for child form.
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   *   Parent form state object.
-   * @param \Drupal\Core\Entity\EntityInterface $entity
-   *   Entity object.
-   * @param string $operation
-   *   Operation that is to be performed in inline form.
-   * @param array $parents
-   *   Entity form #parents.
-   *
-   * @return \Drupal\Core\Form\FormStateInterface
-   *   Child form state object.
-   */
-  public static function buildChildFormState(EntityFormInterface $controller, FormStateInterface $form_state, EntityInterface $entity, $operation, $parents) {
-    $child_form_state = new FormState();
-
-    $child_form_state->addBuildInfo('callback_object', $controller);
-    $child_form_state->addBuildInfo('base_form_id', $controller->getBaseFormID());
-    $child_form_state->addBuildInfo('form_id', $controller->getFormID());
-    $child_form_state->addBuildInfo('args', array());
-
-    // Copy values to child form.
-    $child_form_state->setCompleteForm($form_state->getCompleteForm());
-    $child_form_state->setUserInput($form_state->getUserInput());
-
-    // Filter out all submitted values that are not directly relevant for this
-    // IEF. Otherwise they might mess things up.
-    $form_state_values = $form_state->getValues();
-    $form_state_values = static::extractArraySequence($form_state_values, $parents);
-
-    $child_form_state->setValues($form_state_values);
-    $child_form_state->setStorage($form_state->getStorage());
-    $value = \Drupal::entityTypeManager()->getStorage('entity_form_display')->load($entity->getEntityTypeId() . '.' . $entity->bundle() . '.' . $operation);
-    $child_form_state->set('form_display', $value);
-
-    // Since some of the submit handlers are run, redirects need to be disabled.
-    $child_form_state->disableRedirect();
-
-    // When a form is rebuilt after Ajax processing, its #build_id and #action
-    // should not change.
-    // @see drupal_rebuild_form()
-    $rebuild_info = $child_form_state->getRebuildInfo();
-    $rebuild_info['copy']['#build_id'] = TRUE;
-    $rebuild_info['copy']['#action'] = TRUE;
-    $child_form_state->setRebuildInfo($rebuild_info);
-
-    $child_form_state->set('inline_entity_form', $form_state->get('inline_entity_form'));
-    $child_form_state->set('langcode', $entity->language()->getId());
-
-    $child_form_state->set('field', $form_state->get('field'));
-    $child_form_state->setTriggeringElement($form_state->getTriggeringElement());
-    $child_form_state->setSubmitHandlers($form_state->getSubmitHandlers());
-
-    return $child_form_state;
-  }
-
-  /**
-   * Extracts part of array based on keys in the list.
-   *
-   * Returned array will be a subset of the original, containing only
-   * values whose keys match items from the list.
-   *
-   * @param array $array
-   *   Original array.
-   * @param array $list
-   *   List of keys to be used for extraction.
-   *
-   * @return array
-   *   Extracted array.
-   */
-  static public function extractArraySequence($array, $list) {
-    if ($list) {
-      if (isset($array[$list[0]])) {
-        return [
-          $list[0] => static::extractArraySequence($array[$list[0]], array_slice($list, 1)),
-        ];
-      }
-      else {
-        return [];
-      }
-    }
-    return $array;
   }
 
   /**

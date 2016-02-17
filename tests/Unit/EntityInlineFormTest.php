@@ -7,7 +7,7 @@
 
 namespace Drupal\Tests\inline_entity_form\Unit;
 
-use \Drupal\inline_entity_form\Form\EntityInlineForm;
+use Drupal\inline_entity_form\InlineFormState;
 
 class EntityInlineFormTest extends \PHPUnit_Framework_TestCase {
 
@@ -15,7 +15,7 @@ class EntityInlineFormTest extends \PHPUnit_Framework_TestCase {
    * @dataProvider providerTestExtractArraySequence
    */
   public function testExtractArraySequence($array, $list, $expected) {
-    $this->assertEquals($expected, EntityInlineForm::extractArraySequence($array, $list));
+    $this->assertEquals($expected, InlineFormState::extractArraySequence($array, $list));
   }
 
   /**
