@@ -8,6 +8,7 @@ namespace Drupal\inline_entity_form\Form;
 
 use Drupal\Core\Entity\ContentEntityFormInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
+use Drupal\Core\Entity\Entity\EntityFormDisplay;
 use Drupal\Core\Entity\EntityFormInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
@@ -147,32 +148,20 @@ class EntityInlineForm implements InlineFormInterface {
    */
   public function entityForm($entity_form, FormStateInterface $form_state) {
     $operation = 'default';
-    $controller = $this->entityTypeManager->getFormObject($entity_form['#entity']->getEntityTypeId(), $operation, FALSE);
-    $controller->setEntity($entity_form['#entity']);
+
+    /** @var ContentEntityInterface $entity */
+    $entity = $entity_form['#entity'];
+    $controller = $this->entityManager->getFormObject($entity->getEntityTypeId(), $operation);
+    $controller->setEntity($entity);
+
     $form_state->set(['inline_entity_form', $entity_form['#ief_id'], 'entity_form'], $controller);
 
-    $child_form_state = $this->buildChildFormState($controller, $form_state, $entity_form['#entity'], $operation, $entity_form['#parents']);
-
-    if ($controller instanceof ContentEntityFormInterface) {
-      $controller->getFormDisplay($child_form_state)->buildForm($entity_form['#entity'], $entity_form, $child_form_state);
-    }
-    else {
-      $entity_form = $controller->buildForm($entity_form, $child_form_state);
-    }
-
+    $form_display = EntityFormDisplay::collectRenderDisplay($entity, 'default');
+    $form_display->buildForm($entity, $entity_form, $form_state);
 
     if (!$entity_form['#display_actions']) {
       unset($entity_form['actions']);
     }
-
-    // TODO - this is field-only part of the code. Figure out how to refactor.
-    if ($child_form_state->get('inline_entity_form')) {
-      foreach ($child_form_state->get('inline_entity_form') as $id => $data) {
-        $form_state->set(['inline_entity_form', $id], $data);
-      }
-    }
-
-    $form_state->set('field', $child_form_state->get('field'));
 
     $entity_form['#element_validate'][] = [get_class($this), 'entityFormValidate'];
 
