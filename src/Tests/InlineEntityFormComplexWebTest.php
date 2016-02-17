@@ -81,7 +81,7 @@ class InlineEntityFormComplexWebTest extends InlineEntityFormTestBase {
   /**
    * Tests if form behaves correctly when field is empty.
    */
-  public function ztestEmptyFieldIEF() {
+  public function testEmptyFieldIEF() {
     // Don't allow addition of existing nodes.
     $this->setAllowExisting(FALSE);
     $this->drupalGet($this->formContentAddUrl);
@@ -122,7 +122,7 @@ class InlineEntityFormComplexWebTest extends InlineEntityFormTestBase {
   /**
    * Tests creation of entities.
    */
-  public function ztestEntityCreation() {
+  public function testEntityCreation() {
     // Allow addition of existing nodes.
     $this->setAllowExisting(TRUE);
     $this->drupalGet($this->formContentAddUrl);
@@ -192,7 +192,7 @@ class InlineEntityFormComplexWebTest extends InlineEntityFormTestBase {
    *
    * ief_test_nested1 -> ief_test_nested2 -> ief_test_nested3
    */
-  public function ztestNestedEntityCreationWithDifferentBundlesAjaxSubmit() {
+  public function testNestedEntityCreationWithDifferentBundlesAjaxSubmit() {
     $required_possibilities = [
       FALSE,
       // Fails because of a known bug. See: https://www.drupal.org/node/2649710
@@ -244,7 +244,7 @@ class InlineEntityFormComplexWebTest extends InlineEntityFormTestBase {
    *
    * ief_test_nested1 -> ief_test_nested2 -> ief_test_nested3
    */
-  public function ztestNestedEntityCreationWithDifferentBundlesNoAjaxSubmit() {
+  public function testNestedEntityCreationWithDifferentBundlesNoAjaxSubmit() {
     $required_possibilities = [
       FALSE,
       // Fails because of a known bug. See: https://www.drupal.org/node/2649710
@@ -277,7 +277,7 @@ class InlineEntityFormComplexWebTest extends InlineEntityFormTestBase {
   /**
    * Tests if editing and removing entities work.
    */
-  public function ztestEntityEditingAndRemoving() {
+  public function testEntityEditingAndRemoving() {
     // Allow addition of existing nodes.
     $this->setAllowExisting(TRUE);
 
@@ -365,7 +365,7 @@ class InlineEntityFormComplexWebTest extends InlineEntityFormTestBase {
   /**
    * Tests if referencing existing entities work.
    */
-  public function ztestReferencingExistingEntities() {
+  public function testReferencingExistingEntities() {
     // Allow addition of existing nodes.
     $this->setAllowExisting(TRUE);
 
@@ -433,7 +433,7 @@ class InlineEntityFormComplexWebTest extends InlineEntityFormTestBase {
    * Tests if a referenced content can be edited while the referenced content is
    * newer than the referencing parent node.
    */
-  public function ztestEditedInlineEntityValidation() {
+  public function testEditedInlineEntityValidation() {
     $this->setAllowExisting(TRUE);
 
     // Create referenced content.
