@@ -11,10 +11,28 @@ use Drupal\inline_entity_form\InlineFormState;
 
 class EntityInlineFormTest extends \PHPUnit_Framework_TestCase {
 
+  protected $entityForm;
+
+  protected $formState;
+
+  protected $contentEntity;
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp() {
+    parent::setUp();
+
+    $this->entityForm = $this->getMock('\Drupal\Core\Entity\EntityFormInterface');
+
+  }
+
+
   /**
    * @dataProvider providerTestExtractArraySequence
    */
   public function testExtractArraySequence($array, $list, $expected) {
+    $inline_form_state = $this->getMock('\Drupal\inline_entity_form\InlineFormState');
+    //$inline_form_state->method()
     $this->assertEquals($expected, InlineFormState::extractArraySequence($array, $list));
   }
 

@@ -27,7 +27,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Generic entity inline form handler.
  */
-class EntityInlineForm extends ContentEntityForm implements InlineFormInterface {
+class EntityInlineForm implements InlineFormInterface {
 
   /**
    * The entity field manager.
@@ -86,6 +86,31 @@ class EntityInlineForm extends ContentEntityForm implements InlineFormInterface 
       $container->get('module_handler'),
       $entity_type
     );
+  }
+
+  /**
+   * Build from form.
+   *
+   * @param $entity_form
+   * @param $entity
+   * @param $inline_form_state
+   */
+  protected static function buildEntity(&$entity_form, ContentEntityInterface $entity, $inline_form_state) {
+
+    self::copyFormValuesToEntity($entity, $entity_form, $inline_form_state);
+
+    // Invoke all specified builders for copying form values to entity
+    // properties.
+    if (isset($entity_form['#entity_builders'])) {
+      foreach ($entity_form['#entity_builders'] as $function) {
+        call_user_func_array($function, [
+          $entity->getEntityTypeId(),
+          $entity,
+          &$entity_form,
+          &$inline_form_state
+        ]);
+      }
+    }
   }
 
   /**
@@ -152,18 +177,9 @@ class EntityInlineForm extends ContentEntityForm implements InlineFormInterface 
   public function entityForm($entity_form, FormStateInterface $form_state) {
     $operation = 'default';
 
-    /** @var ContentEntityInterface $entity */
-    $entity = $entity_form['#entity'];
-    $this->setEntity($entity);
     $form_state->set(['inline_entity_form', $entity_form['#ief_id'], 'entity_form'], $this);
 
-    $form_display = EntityFormDisplay::collectRenderDisplay($entity, $operation);
-    $inline_form_state = new InlineFormState($this, $form_state, $entity_form['#entity'], $operation, $entity_form['#parents']);
-    $form_display->buildForm($entity, $entity_form, $inline_form_state);
-
-    if (!$entity_form['#display_actions']) {
-      unset($entity_form['actions']);
-    }
+    $this->buildForm($entity_form, $form_state, $operation);
 
     $entity_form['#element_validate'][] = [get_class($this), 'entityFormValidate'];
 
@@ -191,18 +207,19 @@ class EntityInlineForm extends ContentEntityForm implements InlineFormInterface 
     }
 
     if ($validate) {
-      /** @var \Drupal\Core\Entity\EntityInterface $entity */
+      /** @var \Drupal\Core\Entity\ContentEntityInterface $entity */
       $entity = $entity_form['#entity'];
       $operation = 'default';
 
       /** @var \Drupal\Core\Entity\EntityFormInterface $controller */
       $controller = $form_state->get(['inline_entity_form', $entity_form['#ief_id'], 'entity_form']);
-      $inline_form_state = new InlineFormState($controller, $form_state, $entity, $operation, $entity_form['#parents']);
-      $entity_form['#entity'] = $controller->validateForm($entity_form, $inline_form_state);
+      $inline_form_state = new InlineFormState($form_state, $entity, $operation, $entity_form['#parents']);
+      static::buildEntity($entity_form, $entity, $inline_form_state);
+      static::getFormDisplay($entity, $operation)->validateFormValues($entity, $entity_form, $inline_form_state);
 
       // TODO - this is field-only part of the code. Figure out how to refactor.
       if ($inline_form_state->has(['inline_entity_form', $entity_form['#ief_id']])) {
-        $form_state->set(['inline_entity_form', $entity_form['#ief_id'], 'entity'], $entity_form['#entity']);
+        $form_state->set(['inline_entity_form', $entity_form['#ief_id'], 'entity'], $entity);
       }
 
       foreach($inline_form_state->getErrors() as $name => $message) {
@@ -230,30 +247,26 @@ class EntityInlineForm extends ContentEntityForm implements InlineFormInterface 
    * {@inheritdoc}
    */
   public static function entityFormSubmit(&$entity_form, FormStateInterface $form_state) {
-    /** @var \Drupal\Core\Entity\EntityInterface $entity */
+    /** @var ContentEntityInterface $entity */
     $entity = $entity_form['#entity'];
     $operation = 'default';
-    /** @var ContentEntityFormInterface $controller */
+    /** @var EntityInlineForm $controller */
     $controller = $form_state->get(['inline_entity_form', $entity_form['#ief_id'], 'entity_form']);
-    $controller->setEntity($entity);
+    //$controller->setEntity($entity);
 
-    $inline_form_state = new InlineFormState($controller, $form_state, $entity, $operation, $entity_form['#parents']);
-    $child_form = $entity_form;
-    $child_form['#ief_parents'] = $entity_form['#parents'];
-    $controller->submitForm($child_form, $inline_form_state);
-    $entity = $entity_form['#entity'] = $controller->getEntity();
+    $inline_form_state = new InlineFormState($form_state, $entity, $operation, $entity_form['#parents']);
 
-    // Invoke all specified builders for copying form values to entity
-    // properties.
-    if (isset($entity_form['#entity_builders'])) {
-      foreach ($entity_form['#entity_builders'] as $function) {
-        call_user_func_array($function, [$entity->getEntityTypeId(), $entity, &$child_form, &$inline_form_state]);
-      }
-    }
-    if ($entity instanceof ContentEntityInterface) {
-      // The entity was already validated in entityFormValidate().
-      $entity->setValidationRequired(FALSE);
-    }
+    // @todo why was this being copied?
+    //$child_form = $entity_form;
+    //$child_form['#ief_parents'] = $entity_form['#parents'];
+
+    $inline_form_state->cleanValues();
+    $entity = $entity_form['#entity'];
+    static::buildEntity($entity_form, $entity, $inline_form_state);
+
+    // The entity was already validated in entityFormValidate().
+    $entity->setValidationRequired(FALSE);
+
     if ($entity_form['#save_entity']) {
       $entity->save();
     }
@@ -307,4 +320,64 @@ class EntityInlineForm extends ContentEntityForm implements InlineFormInterface 
     }
   }
 
+  /**
+   * Build the entity form
+   * @param array $entity_form
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   * @param $entity
+   * @param $operation
+   */
+  protected function buildForm(&$entity_form, FormStateInterface $form_state, $operation) {
+    /** @var ContentEntityInterface $entity */
+    $entity = $entity_form['#entity'];
+    $form_display = static::getFormDisplay($entity, $operation);
+    $inline_form_state = new InlineFormState($form_state, $entity_form['#entity'], $operation, $entity_form['#parents']);
+    $form_display->buildForm($entity, $entity_form, $inline_form_state);
+
+    if (!$entity_form['#display_actions']) {
+      unset($entity_form['actions']);
+    }
+  }
+
+  /**
+   * Get form display for entity operation.
+   *
+   * @param ContentEntityInterface $entity
+   * @param string $operation
+   *
+   * @return \Drupal\Core\Entity\Display\EntityFormDisplayInterface
+   */
+  protected static function getFormDisplay(ContentEntityInterface $entity, $operation) {
+    $form_display = EntityFormDisplay::collectRenderDisplay($entity, $operation);
+    return $form_display;
+  }
+
+  /**
+   * Copies top-level form values to entity properties
+   *
+   * This should not change existing entity properties that are not being edited
+   * by this form.
+   *
+   * @param \Drupal\Core\Entity\EntityInterface $entity
+   *   The entity the current form should operate upon.
+   * @param array $form
+   *   A nested array of form elements comprising the form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The current state of the form.
+   */
+  protected static function copyFormValuesToEntity(ContentEntityInterface $entity, array $form, FormStateInterface $form_state) {
+    $values = $form_state->getValues();
+
+    if ($entity instanceof EntityWithPluginCollectionInterface) {
+      // Do not manually update values represented by plugin collections.
+      $values = array_diff_key($values, $entity->getPluginCollections());
+    }
+
+    // @todo: This relies on a method that only exists for config and content
+    //   entities, in a different way. Consider moving this logic to a config
+    //   entity specific implementation.
+    foreach ($values as $key => $value) {
+      $entity->set($key, $value);
+    }
+  }
 }

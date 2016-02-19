@@ -8,6 +8,7 @@
 namespace Drupal\inline_entity_form;
 
 
+use Drupal\Core\Entity\ContentEntityFormInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityFormInterface;
 use Drupal\Core\Form\FormState;
@@ -18,10 +19,12 @@ class InlineFormState extends FormState{
   /**
    * InlineFormState constructor.
    */
-  public function __construct(EntityFormInterface $controller, FormStateInterface $form_state, ContentEntityInterface $entity, $operation, $parents) {
-    $this->addBuildInfo('callback_object', $controller);
-    $this->addBuildInfo('base_form_id', $controller->getBaseFormID());
-    $this->addBuildInfo('form_id', $controller->getFormID());
+  public function __construct(FormStateInterface $form_state, ContentEntityInterface $entity, $operation, $parents) {
+    /** @var ContentEntityFormInterface $form_object */
+    $form_object = $form_state->getFormObject();
+    $this->addBuildInfo('callback_object', $form_object);
+    $this->addBuildInfo('base_form_id', $form_object->getBaseFormId());
+    $this->addBuildInfo('form_id', $form_object->getFormID());
     $this->addBuildInfo('args', array());
 
     // Copy values to child form.
@@ -53,7 +56,7 @@ class InlineFormState extends FormState{
   }
 
   protected function setValuesFromParentState(FormStateInterface $form_state, $parents) {
-    $form_state_values = $this->extractArraySequence($form_state->getValues(), $parents);
+    $form_state_values = $this->extractNestedValues($form_state->getValues(), $parents);
     $this->setValues($form_state_values);
   }
 
@@ -71,12 +74,10 @@ class InlineFormState extends FormState{
    * @return array
    *   Extracted array.
    */
-   public static function extractArraySequence($array, $list) {
+   public static function extractNestedValues($array, $list) {
     if ($list) {
       if (isset($array[$list[0]])) {
-        return [
-          $list[0] => static::extractArraySequence($array[$list[0]], array_slice($list, 1)),
-        ];
+        return static::extractNestedValues($array[$list[0]], array_slice($list, 1));
       }
       else {
         return [];

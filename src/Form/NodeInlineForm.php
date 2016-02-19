@@ -14,7 +14,8 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
  * Node inline form handler.
  */
 class NodeInlineForm extends EntityInlineForm {
-  
+
+  use StringTranslationTrait;
 
   /**
    * {@inheritdoc}
