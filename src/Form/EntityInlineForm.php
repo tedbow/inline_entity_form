@@ -6,22 +6,16 @@
 
 namespace Drupal\inline_entity_form\Form;
 
-use Drupal\Core\Entity\ContentEntityForm;
-use Drupal\Core\Entity\ContentEntityFormInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
-use Drupal\Core\Entity\EntityFormInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Field\WidgetBase;
-use Drupal\Core\Form\FormState;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\inline_entity_form\InlineFormInterface;
-use Drupal\Core\Entity\EntityManagerInterface;
-use Drupal\inline_entity_form\InlineFormState;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -177,8 +171,6 @@ class EntityInlineForm implements InlineFormInterface {
   public function entityForm($entity_form, FormStateInterface $form_state) {
     $operation = 'default';
 
-    //$form_state->set(['inline_entity_form', $entity_form['#ief_id'], 'entity_form'], $this);
-
     $this->buildForm($entity_form, $form_state, $operation);
 
     $entity_form['#element_validate'][] = [get_class($this), 'entityFormValidate'];
@@ -211,9 +203,6 @@ class EntityInlineForm implements InlineFormInterface {
       $entity = $entity_form['#entity'];
       $operation = 'default';
 
-      /** @var \Drupal\Core\Entity\EntityFormInterface $controller */
-      $controller = $form_state->get(['inline_entity_form', $entity_form['#ief_id'], 'entity_form']);
-      //$inline_form_state = new InlineFormState($form_state, $entity, $operation, $entity_form['#parents']);
       static::buildEntity($entity_form, $entity, $form_state);
       static::getFormDisplay($entity, $operation)->validateFormValues($entity, $entity_form, $form_state);
 
@@ -247,20 +236,8 @@ class EntityInlineForm implements InlineFormInterface {
    * {@inheritdoc}
    */
   public static function entityFormSubmit(&$entity_form, FormStateInterface $form_state) {
-    /** @var ContentEntityInterface $entity */
-    $entity = $entity_form['#entity'];
-    $operation = 'default';
-    /** @var EntityInlineForm $controller */
-    $controller = $form_state->get(['inline_entity_form', $entity_form['#ief_id'], 'entity_form']);
-    //$controller->setEntity($entity);
-
-    //$inline_form_state = new InlineFormState($form_state, $entity, $operation, $entity_form['#parents']);
-
-    // @todo why was this being copied?
-    //$child_form = $entity_form;
-    //$child_form['#ief_parents'] = $entity_form['#parents'];
-
     $form_state->cleanValues();
+    /** @var ContentEntityInterface $entity */
     $entity = $entity_form['#entity'];
     static::buildEntity($entity_form, $entity, $form_state);
 
@@ -322,16 +299,15 @@ class EntityInlineForm implements InlineFormInterface {
 
   /**
    * Build the entity form
+   *
    * @param array $entity_form
    * @param \Drupal\Core\Form\FormStateInterface $form_state
-   * @param $entity
    * @param $operation
    */
   protected function buildForm(&$entity_form, FormStateInterface $form_state, $operation) {
     /** @var ContentEntityInterface $entity */
     $entity = $entity_form['#entity'];
     $form_display = static::getFormDisplay($entity, $operation);
-    //$inline_form_state = new InlineFormState($form_state, $entity_form['#entity'], $operation, $entity_form['#parents']);
     $form_display->buildForm($entity, $entity_form, $form_state);
 
     if (!$entity_form['#display_actions']) {
@@ -358,14 +334,14 @@ class EntityInlineForm implements InlineFormInterface {
    * This should not change existing entity properties that are not being edited
    * by this form.
    *
-   * @param \Drupal\Core\Entity\EntityInterface $entity
+   * @param \Drupal\Core\Entity\ContentEntityInterface
    *   The entity the current form should operate upon.
    * @param array $form
    *   A nested array of form elements comprising the form.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The current state of the form.
    */
-  protected static function copyFormValuesToEntity(EntityInterface $entity, array $form, FormStateInterface $form_state) {
+  protected static function copyFormValuesToEntity(ContentEntityInterface $entity, array $form, FormStateInterface $form_state) {
     // First, extract values from widgets.
     $extracted = static::getFormDisplay($entity, 'default')->extractFormValues($entity, $form, $form_state);
 
@@ -378,31 +354,4 @@ class EntityInlineForm implements InlineFormInterface {
       }
     }
   }
-
-  /**
-   * Extracts nested portion of array based on keys in the list.
-   *
-   * Returned array will be a subset of the original, containing only
-   * values whose keys match items from the list.
-   *
-   * @param array $array
-   *   Original array.
-   * @param array $list
-   *   List of keys to be used for extraction.
-   *
-   * @return array
-   *   Extracted array.
-   */
-  public static function extractNestedValues($array, $list) {
-    if ($list) {
-      if (isset($array[$list[0]])) {
-        return static::extractNestedValues($array[$list[0]], array_slice($list, 1));
-      }
-      else {
-        return [];
-      }
-    }
-    return $array;
-  }
-
 }
