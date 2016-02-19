@@ -6,8 +6,6 @@
 
 namespace Drupal\inline_entity_form\Form;
 
-use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Render\Element;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 
 /**
