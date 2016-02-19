@@ -83,16 +83,17 @@ class EntityInlineForm implements InlineFormInterface {
   }
 
   /**
-   * Build from form.
+   * Builds an updated entity object based upon the submitted form values.
    *
-   * @param $entity_form
-   * @param $entity
-   * @param $inline_form_state
+   * @param array $entity_form
+   *  The inline entity portion of the form.
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
+   *  The inline entity.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *  The current state of the form.
    */
-  protected static function buildEntity(&$entity_form, ContentEntityInterface $entity, $inline_form_state) {
-
-    static::copyFormValuesToEntity($entity, $entity_form, $inline_form_state);
-
+  protected static function buildEntity(array &$entity_form, ContentEntityInterface $entity, FormStateInterface $form_state) {
+    static::getFormDisplay($entity)->extractFormValues($entity, $entity_form, $form_state);
     // Invoke all specified builders for copying form values to entity
     // properties.
     if (isset($entity_form['#entity_builders'])) {
@@ -101,7 +102,7 @@ class EntityInlineForm implements InlineFormInterface {
           $entity->getEntityTypeId(),
           $entity,
           &$entity_form,
-          &$inline_form_state
+          &$form_state
         ]);
       }
     }
@@ -169,9 +170,15 @@ class EntityInlineForm implements InlineFormInterface {
    * {@inheritdoc}
    */
   public function entityForm($entity_form, FormStateInterface $form_state) {
-    $operation = 'default';
 
-    $this->buildForm($entity_form, $form_state, $operation);
+    /** @var \Drupal\Core\Entity\ContentEntityInterface $entity */
+    $entity = $entity_form['#entity'];
+    $form_display = static::getFormDisplay($entity);
+    $form_display->buildForm($entity, $entity_form, $form_state);
+
+    if (!$entity_form['#display_actions']) {
+      unset($entity_form['actions']);
+    }
 
     $entity_form['#element_validate'][] = [get_class($this), 'entityFormValidate'];
 
@@ -201,10 +208,9 @@ class EntityInlineForm implements InlineFormInterface {
     if ($validate) {
       /** @var \Drupal\Core\Entity\ContentEntityInterface $entity */
       $entity = $entity_form['#entity'];
-      $operation = 'default';
 
       static::buildEntity($entity_form, $entity, $form_state);
-      static::getFormDisplay($entity, $operation)->validateFormValues($entity, $entity_form, $form_state);
+      static::getFormDisplay($entity)->validateFormValues($entity, $entity_form, $form_state);
 
       // TODO - this is field-only part of the code. Figure out how to refactor.
       if ($form_state->has(['inline_entity_form', $entity_form['#ief_id']])) {
@@ -237,14 +243,13 @@ class EntityInlineForm implements InlineFormInterface {
    */
   public static function entityFormSubmit(&$entity_form, FormStateInterface $form_state) {
     $form_state->cleanValues();
-    /** @var ContentEntityInterface $entity */
+    /** @var \Drupal\Core\Entity\ContentEntityInterface $entity */
     $entity = $entity_form['#entity'];
     static::buildEntity($entity_form, $entity, $form_state);
 
-    // The entity was already validated in entityFormValidate().
-    $entity->setValidationRequired(FALSE);
-
     if ($entity_form['#save_entity']) {
+      // The entity was already validated in entityFormValidate().
+      $entity->setValidationRequired(FALSE);
       $entity->save();
     }
     // TODO - this is field-only part of the code. Figure out how to refactor.
@@ -298,60 +303,16 @@ class EntityInlineForm implements InlineFormInterface {
   }
 
   /**
-   * Build the entity form
+   * Gets the form display for entity operation.
    *
-   * @param array $entity_form
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   * @param $operation
-   */
-  protected function buildForm(&$entity_form, FormStateInterface $form_state, $operation) {
-    /** @var ContentEntityInterface $entity */
-    $entity = $entity_form['#entity'];
-    $form_display = static::getFormDisplay($entity, $operation);
-    $form_display->buildForm($entity, $entity_form, $form_state);
-
-    if (!$entity_form['#display_actions']) {
-      unset($entity_form['actions']);
-    }
-  }
-
-  /**
-   * Get form display for entity operation.
-   *
-   * @param ContentEntityInterface $entity
-   * @param string $operation
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
+   *  The inline entity.
    *
    * @return \Drupal\Core\Entity\Display\EntityFormDisplayInterface
+   *  The current form display.
    */
-  protected static function getFormDisplay(ContentEntityInterface $entity, $operation) {
-    $form_display = EntityFormDisplay::collectRenderDisplay($entity, $operation);
+  protected static function getFormDisplay(ContentEntityInterface $entity) {
+    $form_display = EntityFormDisplay::collectRenderDisplay($entity, 'default');
     return $form_display;
-  }
-
-  /**
-   * Copies top-level form values to entity properties
-   *
-   * This should not change existing entity properties that are not being edited
-   * by this form.
-   *
-   * @param \Drupal\Core\Entity\ContentEntityInterface
-   *   The entity the current form should operate upon.
-   * @param array $form
-   *   A nested array of form elements comprising the form.
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   *   The current state of the form.
-   */
-  protected static function copyFormValuesToEntity(ContentEntityInterface $entity, array $form, FormStateInterface $form_state) {
-    // First, extract values from widgets.
-    $extracted = static::getFormDisplay($entity, 'default')->extractFormValues($entity, $form, $form_state);
-
-    // Then extract the values of fields that are not rendered through widgets,
-    // by simply copying from top-level form values. This leaves the fields
-    // that are not being edited within this form untouched.
-    foreach ($form_state->getValues() as $name => $values) {
-      if ($entity->hasField($name) && !isset($extracted[$name])) {
-        $entity->set($name, $values);
-      }
-    }
   }
 }
