@@ -214,8 +214,8 @@ class EntityInlineForm implements InlineFormInterface {
       /** @var \Drupal\Core\Entity\EntityFormInterface $controller */
       $controller = $form_state->get(['inline_entity_form', $entity_form['#ief_id'], 'entity_form']);
       $inline_form_state = new InlineFormState($form_state, $entity, $operation, $entity_form['#parents']);
-      static::buildEntity($entity_form, $entity, $inline_form_state);
-      static::getFormDisplay($entity, $operation)->validateFormValues($entity, $entity_form, $inline_form_state);
+      static::buildEntity($entity_form, $entity, $form_state);
+      static::getFormDisplay($entity, $operation)->validateFormValues($entity, $entity_form, $form_state);
 
       // TODO - this is field-only part of the code. Figure out how to refactor.
       if ($inline_form_state->has(['inline_entity_form', $entity_form['#ief_id']])) {
@@ -365,19 +365,44 @@ class EntityInlineForm implements InlineFormInterface {
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The current state of the form.
    */
-  protected static function copyFormValuesToEntity(ContentEntityInterface $entity, array $form, FormStateInterface $form_state) {
-    $values = $form_state->getValues();
+  protected function copyFormValuesToEntity(EntityInterface $entity, array $form, FormStateInterface $form_state) {
+    // First, extract values from widgets.
+    $extracted = static::getFormDisplay($entity, 'default')->extractFormValues($entity, $form, $form_state);
 
-    if ($entity instanceof EntityWithPluginCollectionInterface) {
-      // Do not manually update values represented by plugin collections.
-      $values = array_diff_key($values, $entity->getPluginCollections());
-    }
-
-    // @todo: This relies on a method that only exists for config and content
-    //   entities, in a different way. Consider moving this logic to a config
-    //   entity specific implementation.
-    foreach ($values as $key => $value) {
-      $entity->set($key, $value);
+    // Then extract the values of fields that are not rendered through widgets,
+    // by simply copying from top-level form values. This leaves the fields
+    // that are not being edited within this form untouched.
+    foreach ($form_state->getValues() as $name => $values) {
+      if ($entity->hasField($name) && !isset($extracted[$name])) {
+        $entity->set($name, $values);
+      }
     }
   }
+
+  /**
+   * Extracts nested portion of array based on keys in the list.
+   *
+   * Returned array will be a subset of the original, containing only
+   * values whose keys match items from the list.
+   *
+   * @param array $array
+   *   Original array.
+   * @param array $list
+   *   List of keys to be used for extraction.
+   *
+   * @return array
+   *   Extracted array.
+   */
+  public static function extractNestedValues($array, $list) {
+    if ($list) {
+      if (isset($array[$list[0]])) {
+        return static::extractNestedValues($array[$list[0]], array_slice($list, 1));
+      }
+      else {
+        return [];
+      }
+    }
+    return $array;
+  }
+
 }
