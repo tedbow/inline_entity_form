@@ -420,7 +420,7 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
   }
 
   /**
-   * Gets the entity form display instance for this widget.
+   * Gets the entity form mode instance for this widget.
    *
    * @return \Drupal\Core\Entity\EntityFormModeInterface|null
    */
