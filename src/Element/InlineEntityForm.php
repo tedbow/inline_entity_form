@@ -34,9 +34,8 @@ class InlineEntityForm extends RenderElement {
       '#entity' => NULL,
       '#entity_type' => NULL,
       '#bundle' => NULL,
-      // Instance of \Drupal\Core\Entity\Display\EntityFormDisplayInterface.
-      // The entity form display that is used to display the entity.
-      '#ief_form_mode' => NULL,
+      // The form mode used to display the entity form.
+      '#ief_form_mode' => 'default',
       '#language' => LanguageInterface::LANGCODE_NOT_SPECIFIED,
       '#op' => 'add',
       // Will save entity on submit if set to TRUE.

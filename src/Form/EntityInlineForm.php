@@ -288,6 +288,8 @@ class EntityInlineForm implements InlineFormInterface {
    *
    * @param \Drupal\Core\Entity\ContentEntityInterface $entity
    *   The entity.
+   * @param string $form_mode
+   *   The form mode.
    *
    * @return \Drupal\Core\Entity\Display\EntityFormDisplayInterface
    *   The form display.
