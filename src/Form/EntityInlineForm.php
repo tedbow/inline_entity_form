@@ -8,7 +8,6 @@ namespace Drupal\inline_entity_form\Form;
 
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
-use Drupal\Core\Entity\EntityDisplayRepositoryInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
@@ -53,13 +52,6 @@ class EntityInlineForm implements InlineFormInterface {
   protected $moduleHandler;
 
   /**
-   * The entity display repository.
-   *
-   * @var \Drupal\Core\Entity\EntityDisplayRepositoryInterface
-   */
-  protected $entityDisplayRepository;
-
-  /**
    * Constructs the inline entity form controller.
    *
    * @param \Drupal\Core\Entity\EntityFieldManagerInterface $entity_field_manager
@@ -71,11 +63,10 @@ class EntityInlineForm implements InlineFormInterface {
    * @param \Drupal\Core\Entity\EntityTypeInterface $entity_type
    *   The entity type.
    */
-  public function __construct(EntityFieldManagerInterface $entity_field_manager, EntityTypeManagerInterface $entity_type_manager, ModuleHandlerInterface $module_handler, EntityDisplayRepositoryInterface $entity_display_repository, EntityTypeInterface $entity_type) {
+  public function __construct(EntityFieldManagerInterface $entity_field_manager, EntityTypeManagerInterface $entity_type_manager, ModuleHandlerInterface $module_handler, EntityTypeInterface $entity_type) {
     $this->entityFieldManager = $entity_field_manager;
     $this->entityTypeManager = $entity_type_manager;
     $this->moduleHandler = $module_handler;
-    $this->entityDisplayRepository = $entity_display_repository;
     $this->entityType = $entity_type;
   }
 
@@ -87,7 +78,6 @@ class EntityInlineForm implements InlineFormInterface {
       $container->get('entity_field.manager'),
       $container->get('entity_type.manager'),
       $container->get('module_handler'),
-      $container->get('entity_display.repository'),
       $entity_type
     );
   }
@@ -296,13 +286,6 @@ class EntityInlineForm implements InlineFormInterface {
    */
   protected function getFormDisplay(ContentEntityInterface $entity, $form_mode) {
     return EntityFormDisplay::collectRenderDisplay($entity, $form_mode);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getEntityFormModes() {
-    return $this->entityDisplayRepository->getFormModeOptions($this->entityType->id());
   }
 
 }

@@ -7,6 +7,7 @@
 
 namespace Drupal\inline_entity_form\Plugin\Field\FieldWidget;
 
+use Drupal\Core\Entity\EntityDisplayRepositoryInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -15,7 +16,6 @@ use Drupal\Core\Field\WidgetBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Render\Element;
-use Drupal\inline_entity_form\InlineFormInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -52,6 +52,13 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
   protected $iefHandler;
 
   /**
+   * The entity display repository.
+   *
+   * @var \Drupal\Core\Entity\EntityDisplayRepositoryInterface
+   */
+  protected $entityDisplayRepository;
+
+  /**
    * Constructs an InlineEntityFormBase object.
    *
    * @param array $plugin_id
@@ -69,11 +76,12 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
    */
-  public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings, EntityTypeBundleInfoInterface $entity_type_bundle_info, EntityTypeManagerInterface $entity_type_manager) {
+  public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings, EntityTypeBundleInfoInterface $entity_type_bundle_info, EntityTypeManagerInterface $entity_type_manager, EntityDisplayRepositoryInterface $entity_display_repository) {
     parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $third_party_settings);
 
     $this->entityTypeBundleInfo = $entity_type_bundle_info;
     $this->entityTypeManager = $entity_type_manager;
+    $this->entityDisplayRepository = $entity_display_repository;
     $this->initializeIefController();
   }
 
@@ -88,7 +96,8 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
       $configuration['settings'],
       $configuration['third_party_settings'],
       $container->get('entity_type.bundle.info'),
-      $container->get('entity_type.manager')
+      $container->get('entity_type.manager'),
+      $container->get('entity_display.repository')
     );
   }
 
@@ -165,7 +174,7 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
       'override_labels' => FALSE,
       'label_singular' => '',
       'label_plural' => '',
-      'form_mode' => InlineFormInterface::DEFAULT_FORM_MODE,
+      'form_mode' => '',
     ];
   }
 
@@ -205,7 +214,7 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
       '#type' => 'select',
       '#title' => $this->t('Form mode'),
       '#default_value' => $this->getSetting('form_mode'),
-      '#options' => $this->iefHandler->getEntityFormModes()
+      '#options' => $this->getEntityFormModes()
     );
 
     return $element;
@@ -225,6 +234,13 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
     else {
       $summary[] = $this->t('Default labels are used.');
     }
+    if ($entity_form_mode = $this->getEntityFormMode()) {
+      $form_mode_label = $entity_form_mode->label();
+    }
+    else {
+      $form_mode_label = $this->t('Default');
+    }
+    $summary[] = t('Form mode: @mode', array('@mode' => $form_mode_label));
 
     return $summary;
   }
@@ -379,6 +395,41 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
       $entities[$delta]['needs_save'] = TRUE;
       $form_state->set(['inline_entity_form', $ief_id, 'entities'], $entities);
     }
+  }
+
+  /**
+   * Returns an array of entity form modes to be used as options in
+   * the widget settings form.
+   *
+   * @return array
+   */
+  protected function getEntityFormModes() {
+    $entity_type_id = $this->fieldDefinition->getTargetEntityTypeId();
+    return $this->entityDisplayRepository->getFormModeOptions($entity_type_id);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function calculateDependencies() {
+    $dependencies = parent::calculateDependencies();
+    if ($entity_form_mode = $this->getEntityFormMode()) {
+      $dependencies['config'][] = $entity_form_mode->getConfigDependencyName();
+    }
+    return $dependencies;
+  }
+
+  /**
+   * Gets the entity form display instance for this widget.
+   *
+   * @return \Drupal\Core\Entity\EntityFormModeInterface|null
+   */
+  protected function getEntityFormMode() {
+    if ($form_mode = $this->getSetting('form_mode')) {
+      $entity_type_id = $this->fieldDefinition->getTargetEntityTypeId();
+      return $this->entityTypeManager->getStorage('entity_form_mode')->load($entity_type_id . '.' . $form_mode);
+    }
+    return NULL;
   }
 
 }
