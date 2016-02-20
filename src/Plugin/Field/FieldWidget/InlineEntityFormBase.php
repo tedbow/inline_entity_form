@@ -324,7 +324,7 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
     }
 
     // Pass the form mode to the entity form handler
-    $ief['#ief_form_mode'] = $this->iefHandler->getEntityFormDisplay($this->getFieldSetting('target_type'), $bundle, $this->getSetting('form_mode'));
+    $ief['#ief_form_mode'] = $this->getSetting('form_mode');
 
     return $ief;
   }

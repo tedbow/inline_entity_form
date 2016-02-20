@@ -183,7 +183,7 @@ class EntityInlineForm implements InlineFormInterface {
       /** @var \Drupal\Core\Entity\ContentEntityInterface $entity */
       $entity = $entity_form['#entity'];
       $this->buildEntity($entity_form, $entity, $form_state);
-      
+
       $this->getFormDisplay($entity, $entity_form['#ief_form_mode'])->validateFormValues($entity, $entity_form, $form_state);
 
       // TODO - this is field-only part of the code. Figure out how to refactor.
@@ -239,7 +239,7 @@ class EntityInlineForm implements InlineFormInterface {
    *   The current state of the form.
    */
   protected function buildEntity(array $entity_form, ContentEntityInterface $entity, FormStateInterface $form_state) {
-    $this->getFormDisplay($entity)->extractFormValues($entity, $entity_form, $form_state);
+    $this->getFormDisplay($entity, $entity_form['#ief_form_mode'])->extractFormValues($entity, $entity_form, $form_state);
     // Invoke all specified builders for copying form values to entity fields.
     if (isset($entity_form['#entity_builders'])) {
       foreach ($entity_form['#entity_builders'] as $function) {
@@ -301,13 +301,6 @@ class EntityInlineForm implements InlineFormInterface {
    */
   public function getEntityFormModes() {
     return $this->entityDisplayRepository->getFormModeOptions($this->entityType->id());
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getEntityFormDisplay($entity_type, $bundle, $form_mode = InlineFormInterface::DEFAULT_FORM_MODE) {
-    return entity_get_form_display($entity_type, $bundle, $form_mode);
   }
 
 }
