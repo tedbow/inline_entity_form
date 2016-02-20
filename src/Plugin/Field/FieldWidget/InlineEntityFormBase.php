@@ -15,6 +15,7 @@ use Drupal\Core\Field\WidgetBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Render\Element;
+use Drupal\inline_entity_form\InlineFormInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -164,6 +165,7 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
       'override_labels' => FALSE,
       'label_singular' => '',
       'label_plural' => '',
+      'form_mode' => InlineFormInterface::DEFAULT_FORM_MODE,
     ];
   }
 
@@ -197,6 +199,13 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
           ':input[name="' . $states_prefix . '[override_labels]"]' => ['checked' => TRUE],
         ),
       ),
+    );
+
+    $element['form_mode'] = array(
+      '#type' => 'select',
+      '#title' => $this->t('Form mode'),
+      '#default_value' => $this->getSetting('form_mode'),
+      '#options' => $this->iefHandler->getEntityFormModes()
     );
 
     return $element;
@@ -310,6 +319,12 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
     if ($bundle) {
       $ief['#bundle'] = $bundle;
     }
+    elseif ($entity) {
+      $bundle = $entity->bundle();
+    }
+
+    // Pass the form mode to the entity form handler
+    $ief['#ief_form_mode'] = $this->iefHandler->getEntityFormDisplay($this->getFieldSetting('target_type'), $bundle, $this->getSetting('form_mode'));
 
     return $ief;
   }

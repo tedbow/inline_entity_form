@@ -22,6 +22,9 @@ field.widget.settings.inline_entity_form_simple:
     match_operator:
       type: string
       label: "Match operator"
+    form_mode:
+      type: string
+      label: "Form mode"
 
 field.widget.settings.inline_entity_form_complex:
   type: mapping
@@ -45,3 +48,6 @@ field.widget.settings.inline_entity_form_complex:
     match_operator:
       type: string
       label: "Match operator"
+    form_mode:
+      type: string
+      label: "Form mode"

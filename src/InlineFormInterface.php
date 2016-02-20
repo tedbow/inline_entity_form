@@ -17,6 +17,16 @@ use Drupal\Core\Form\FormStateInterface;
 interface InlineFormInterface extends EntityHandlerInterface {
 
   /**
+   * The fallback form_mode to use.
+   */
+  const DEFAULT_FORM_MODE = 'default';
+
+  /**
+   * The fallback form handler to call.
+   */
+  const DEFAULT_OPERATION = 'default';
+
+  /**
    * Gets the entity type managed by this handler.
    *
    * @return \Drupal\Core\Entity\EntityTypeInterface
@@ -122,5 +132,29 @@ interface InlineFormInterface extends EntityHandlerInterface {
    *   - parent_entity: The parent entity.
    */
   public function delete($ids, $context);
+
+  /**
+   * Returns an array of entity form modes to be used as options in
+   * the widget settings form.
+   *
+   * @return array
+   */
+  public function getEntityFormModes();
+
+  /**
+   * Returns the entity form display entity selected in the settings widget.
+   * If the display mode doesn't exist in the available modes list then return
+   * the first mode in the list.
+   *
+   * @param string $entity_type
+   *   The entity type.
+   * @param string $bundle
+   *   The bundle.
+   * @param string $form_mode
+   *   The form mode to render.
+   *
+   * @return \Drupal\Core\Entity\Display\EntityFormDisplayInterface
+   */
+  public function getEntityFormDisplay($entity_type, $bundle, $form_mode = self::DEFAULT_FORM_MODE);
 
 }
