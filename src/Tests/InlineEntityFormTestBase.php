@@ -122,7 +122,7 @@ abstract class InlineEntityFormTestBase extends WebTestBase {
         $this->assertFieldByName($prefix . $expected_field);
       }
       foreach ($fields['unexpected'] as $unexpected_field) {
-        $this->assertNoFieldByName($prefix . $unexpected_field);
+        $this->assertNoFieldByName($prefix . $unexpected_field, NULL);
       }
     }
     else {
