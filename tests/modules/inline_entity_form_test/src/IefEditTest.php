@@ -26,14 +26,14 @@ class IefEditTest extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, Node $node = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, Node $node = NULL, $form_mode = 'default') {
     $form['inline_entity_form'] = [
       '#type' => 'inline_entity_form',
       '#op' => 'edit',
       '#entity_type' => 'node',
       '#bundle' => 'ief_test_custom',
       '#entity' => $node,
-      '#ief_form_mode' => 'default',
+      '#ief_form_mode' => $form_mode,
     ];
     $form['submit'] = [
       '#type' => 'submit',
