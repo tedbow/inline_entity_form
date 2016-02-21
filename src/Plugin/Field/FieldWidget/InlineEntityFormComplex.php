@@ -59,6 +59,8 @@ class InlineEntityFormComplex extends InlineEntityFormBase implements ContainerF
    *   The entity type bundle info.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
+   * @param \Drupal\Core\Entity\EntityDisplayRepositoryInterface
+   *   The entity display repository.
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
    *   Module handler service.
    */
