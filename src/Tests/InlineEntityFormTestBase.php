@@ -117,6 +117,7 @@ abstract class InlineEntityFormTestBase extends WebTestBase {
       ],
     ];
     if ($fields = $form_display_fields[$form_display]) {
+      $this->assert('debug', 'Checking form dispaly: '. $form_display);
       foreach ($fields['expected'] as $expected_field) {
         $this->assertFieldByName($prefix . $expected_field);
       }
