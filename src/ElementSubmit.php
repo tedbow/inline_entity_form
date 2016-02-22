@@ -26,7 +26,6 @@ class ElementSubmit {
     }
     $built_forms[] = $form['#build_id'];
     $submit = array_merge([[get_called_class(), 'trigger']], $form['#submit']);
-    //$submit = array_unique($submit, SORT_REGULAR);
 
     if (!empty($form['submit'])) {
       if (empty($form['submit']['#submit'])) {
@@ -34,7 +33,6 @@ class ElementSubmit {
       }
       else {
         $form['submit']['#submit'] = array_merge([[get_called_class(), 'trigger']], $form['submit']['#submit']);
-        //$form['submit']['#submit'] = array_unique($form['submit']['#submit'], SORT_REGULAR);
       }
       $form['submit']['#ief_submit_trigger']  = TRUE;
       $form['submit']['#ief_submit_trigger_all'] = TRUE;
@@ -47,7 +45,6 @@ class ElementSubmit {
         }
         else {
           $form['actions'][$action]['#submit'] = array_merge([[get_called_class(), 'trigger']], $form['actions'][$action]['#submit']);
-          //$form['actions'][$action]['#submit'] = array_unique($form['actions'][$action]['#submit'], SORT_REGULAR);
         }
         $form['actions'][$action]['#ief_submit_trigger']  = TRUE;
         $form['actions'][$action]['#ief_submit_trigger_all'] = TRUE;
