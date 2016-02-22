@@ -20,6 +20,11 @@ class ElementSubmit {
    *   The form state.
    */
   public static function attach(&$form, FormStateInterface $form_state) {
+    static $built_forms = [];
+    if (in_array($form['#build_id'], $built_forms)) {
+      return;
+    }
+    $built_forms[] = $form['#build_id'];
     $submit = array_merge([[get_called_class(), 'trigger']], $form['#submit']);
     $submit = array_unique($submit, SORT_REGULAR);
 
