@@ -79,6 +79,37 @@ class EntityInlineForm implements InlineFormInterface {
   }
 
   /**
+   * Gets the IEF id for a form element.
+   *
+   * @param $element
+   *
+   * @return string
+   */
+  public static function getElementIEFId($element) {
+    if (isset($element['#ief_id'])) {
+      return $element['#ief_id'];
+    }
+    // @todo Make sure that all buttons have #ief_id set so below is not necessary.
+    if (strpos($element['#name'], 'ief-add-submit-') === 0) {
+      return str_replace('ief-add-submit-', '', $element['#name']);
+    }
+    return '';
+  }
+
+  /**
+   * Determine if the form was submitted by an element for this IEF Form.
+   *
+   * @param array $entity_form
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *
+   * @return bool
+   */
+  public static function triggeredByCurrent(array $entity_form, FormStateInterface $form_state) {
+    $trigger_ief_id = static::getElementIEFId($form_state->getTriggeringElement());
+    return $trigger_ief_id == $entity_form['#ief_id'];
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function getEntityType() {
@@ -162,7 +193,8 @@ class EntityInlineForm implements InlineFormInterface {
     $validate = TRUE;
     if (empty($triggering_element['#ief_submit_trigger_all'])) {
       $element_name = end($triggering_element['#array_parents']);
-      $validate = in_array($element_name, ['ief_add_save', 'ief_edit_save']);
+      $validate = in_array($element_name, ['ief_add_save', 'ief_edit_save'])
+        && static::triggeredByCurrent($entity_form, $form_state);
     }
 
     if ($validate) {
