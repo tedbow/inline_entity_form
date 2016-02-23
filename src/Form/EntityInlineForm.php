@@ -82,14 +82,16 @@ class EntityInlineForm implements InlineFormInterface {
    * Gets the IEF id for a form element.
    *
    * @param $element
+   *  The form element.
    *
    * @return string
+   *  The IEF id.
    */
   public static function getElementIEFId($element) {
     if (isset($element['#ief_id'])) {
       return $element['#ief_id'];
     }
-    // @todo Make sure that all buttons have #ief_id set so below is not necessary.
+
     if (strpos($element['#name'], 'ief-add-submit-') === 0) {
       return str_replace('ief-add-submit-', '', $element['#name']);
     }
@@ -97,10 +99,12 @@ class EntityInlineForm implements InlineFormInterface {
   }
 
   /**
-   * Determine if the form was submitted by an element for this IEF Form.
+   * Determines if the form was submitted by an element for this IEF Form.
    *
    * @param array $entity_form
+   *  The entity form.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *  The current state of the form.
    *
    * @return bool
    */
