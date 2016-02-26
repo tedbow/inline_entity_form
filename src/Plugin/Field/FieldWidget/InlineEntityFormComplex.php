@@ -1016,33 +1016,9 @@ class InlineEntityFormComplex extends InlineEntityFormBase implements ContainerF
     }
   }
 
-  /**
-   * Saves all IEF entities stored in the form state.
-   *
-   * @todo This will currently probably save entities that have already been
-   *   saved. 'needs_save' is not removed on $entity->save() in
-   *   \Drupal\inline_entity_form\Plugin\Field\FieldWidget\InlineEntityFormComplex::extractFormValues
-   *
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   */
-  public static function handleFormStateEntities(FormStateInterface $form_state) {
-    $inline_form_states = $form_state->get('inline_entity_form');
-    foreach ($inline_form_states as $inline_form_state) {
-      if (!empty($inline_form_state['entities'])) {
-        $entities = $inline_form_state['entities'];
-        foreach ($entities as $entity_info) {
-          if ($entity_info['needs_save'] == TRUE && $entity_info['entity']) {
-            /** @var \Drupal\Core\Entity\ContentEntityInterface $entity */
-            $entity = $entity_info['entity'];
-            $entity->save();
-            unset($entity_info['needs_save']);
-          }
-        }
-      }
-    }
-  }
 
-  public static function afterBuild(array $element, FormStateInterface $form_state) {
+
+  public static function xafterBuild(array $element, FormStateInterface $form_state) {
     static::addCompleteFormCallbacks($form_state);
     return parent::afterBuild($element, $form_state);
   }

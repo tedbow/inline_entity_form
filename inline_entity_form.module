@@ -14,6 +14,7 @@ use Drupal\Core\Render\Element;
 use Drupal\inline_entity_form\ElementSubmit;
 use Drupal\inline_entity_form\Form\EntityInlineForm;
 use Drupal\inline_entity_form\Plugin\Field\FieldWidget\InlineEntityFormComplex;
+use Drupal\inline_entity_form\WidgetSubmit;
 
 /**
  * Implements hook_entity_info_alter().
@@ -37,9 +38,8 @@ function inline_entity_form_entity_type_build(array &$entity_types) {
  * Implements hook_form_alter().
  */
 function inline_entity_form_form_alter(&$form, FormStateInterface $form_state, $form_id) {
-  if ($form_state->get('inline_entity_form')) {
-    ElementSubmit::attach($form, $form_state);
-  }
+  ElementSubmit::formAlter($form, $form_state);
+  WidgetSubmit::formAlter($form, $form_state);
 }
 
 /**

@@ -111,7 +111,7 @@ class InlineEntityForm extends RenderElement {
     $entity_form = $inline_form_handler->entityForm($entity_form, $form_state);
     // The form element can't rely on inline_entity_form_form_alter() calling
     // ElementSubmit::attach() since form alters run before #process callbacks.
-    ElementSubmit::attach($complete_form, $form_state);
+    ElementSubmit::formAlter($complete_form, $form_state);
 
     return $entity_form;
   }
