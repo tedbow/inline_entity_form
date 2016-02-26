@@ -177,6 +177,7 @@ class InlineEntityFormComplex extends InlineEntityFormBase implements ContainerF
     if (!$this->canBuildForm($form_state)) {
       return $element;
     }
+    $this->addCompleteFormCallbacks($form_state);
 
     $settings = $this->getSettings();
     $target_type = $this->getFieldSetting('target_type');
@@ -626,6 +627,7 @@ class InlineEntityFormComplex extends InlineEntityFormBase implements ContainerF
           $entity = $item['entity'];
           if (!empty($item['needs_save'])) {
             $entity->save();
+            $item['needs_save'] = FALSE;
           }
           if (!empty($item['delete'])) {
             $entity->delete();
@@ -999,5 +1001,51 @@ class InlineEntityFormComplex extends InlineEntityFormBase implements ContainerF
     $element = inline_entity_form_get_element($form, $form_state);
     inline_entity_form_close_all_forms($element, $form_state);
   }
+
+  protected static function addCompleteFormCallbacks(FormStateInterface $form_state) {
+    if ($form = $form_state->getCompleteForm()) {
+      $new_callback = [get_called_class(), 'handleFormStateEntities'];
+      if (!empty($form['#submit'])) {
+        foreach ($form['#submit'] as $callback) {
+          if ($callback == $new_callback) {
+            return;
+          }
+        }
+      }
+      $form['#submit'][] = $new_callback;
+    }
+  }
+
+  /**
+   * Saves all IEF entities stored in the form state.
+   *
+   * @todo This will currently probably save entities that have already been
+   *   saved. 'needs_save' is not removed on $entity->save() in
+   *   \Drupal\inline_entity_form\Plugin\Field\FieldWidget\InlineEntityFormComplex::extractFormValues
+   *
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   */
+  public static function handleFormStateEntities(FormStateInterface $form_state) {
+    $inline_form_states = $form_state->get('inline_entity_form');
+    foreach ($inline_form_states as $inline_form_state) {
+      if (!empty($inline_form_state['entities'])) {
+        $entities = $inline_form_state['entities'];
+        foreach ($entities as $entity_info) {
+          if ($entity_info['needs_save'] == TRUE && $entity_info['entity']) {
+            /** @var \Drupal\Core\Entity\ContentEntityInterface $entity */
+            $entity = $entity_info['entity'];
+            $entity->save();
+            unset($entity_info['needs_save']);
+          }
+        }
+      }
+    }
+  }
+
+  public static function afterBuild(array $element, FormStateInterface $form_state) {
+    static::addCompleteFormCallbacks($form_state);
+    return parent::afterBuild($element, $form_state);
+  }
+
 
 }
