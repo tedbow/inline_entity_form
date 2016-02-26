@@ -77,6 +77,8 @@ class ElementSubmit {
     if (!empty($triggered_element['#ief_submit_trigger_all'])) {
       // The parent form was submitted, process all IEFs and their children.
       static::doSubmit($form, $form_state);
+      // After submitting remaining elements save entities just stored in state
+      static::handleFormStateEntities($form_state);
     }
     else {
       // A specific element was submitted, process it and all of its children.
@@ -107,6 +109,32 @@ class ElementSubmit {
     if (!empty($element['#ief_element_submit'])) {
       foreach ($element['#ief_element_submit'] as $callback) {
         call_user_func_array($callback, [&$element, &$form_state]);
+      }
+    }
+  }
+
+  /**
+   * Saves all IEF entities stored in the form state.
+   *
+   * @todo This will currently probably save entities that have already been
+   *   saved. 'needs_save' is not removed on $entity->save() in
+   *   \Drupal\inline_entity_form\Plugin\Field\FieldWidget\InlineEntityFormComplex::extractFormValues
+   *
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   */
+  protected static function handleFormStateEntities(FormStateInterface $form_state) {
+    $inline_form_states = $form_state->get('inline_entity_form');
+    foreach ($inline_form_states as $inline_form_state) {
+      if (!empty($inline_form_state['entities'])) {
+        $entities = $inline_form_state['entities'];
+        foreach ($entities as $entity_info) {
+          if ($entity_info['needs_save'] == TRUE && $entity_info['entity']) {
+            /** @var \Drupal\Core\Entity\ContentEntityInterface $entity */
+            $entity = $entity_info['entity'];
+            $entity->save();
+            unset($entity_info['needs_save']);
+          }
+        }
       }
     }
   }
