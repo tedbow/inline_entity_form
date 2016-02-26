@@ -267,7 +267,7 @@ class InlineEntityFormComplexWebTest extends InlineEntityFormTestBase {
     else {
       $this->drupalPostForm(NULL, $edit, t('Save'));
     }
-
+    $this->nodeStorage->resetCache([$level_2_node->id()]);
     $level_2_node = $this->nodeStorage->load($level_2_node->id());
     $this->assertEqual($level_2_node_update_title, $level_2_node->getTitle());
   }
