@@ -12,7 +12,7 @@ use Drupal\Core\Render\Element;
  * #ief_element_submit callbacks are invoked by a #submit callback added
  * to the form's main submit button.
  */
-class ElementSubmit {
+class ElementSubmit extends SubmitBase{
 
   /**
    * Attaches the #ief_element_submit functionality to the given form.
@@ -23,13 +23,9 @@ class ElementSubmit {
    *   The form state.
    */
   public static function attach(&$form, FormStateInterface $form_state) {
-    // attach() is called for each IEF form element, but the callbacks only
-    // need to be added once per form build.
-    if ($form_state->getTemporaryValue('ief_build_id') == $form['#build_id']) {
+    if (self::isAttached($form, $form_state)) {
       return;
     }
-    $form_state->setTemporaryValue('ief_build_id', $form['#build_id']);
-
     // Entity form actions.
     foreach (['submit', 'publish', 'unpublish'] as $action) {
       if (!empty($form['actions'][$action])) {
@@ -42,27 +38,6 @@ class ElementSubmit {
     }
   }
 
-  /**
-   * Adds the trigger callback to the given submit element.
-   *
-   * @param array $element
-   *   The submit element.
-   * @param array $complete_form
-   *   The complete form.
-   */
-  public static function addCallback(&$element, $complete_form) {
-    if (empty($element['#submit'])) {
-      // Drupal runs either the button-level callbacks or the form-level ones.
-      // Having no button-level callbacks indicates that the form has relied
-      // on form-level callbacks, which now need to be transferred.
-      $element['#submit'] = $complete_form['#submit'];
-    }
-
-    $element['#submit'] = array_merge([[get_called_class(), 'trigger']], $element['#submit']);
-    // Used to distinguish between an inline form submit and main form submit.
-    $element['#ief_submit_trigger']  = TRUE;
-    $element['#ief_submit_trigger_all'] = TRUE;
-  }
 
   /**
    * Button #submit callback: Triggers submission of element forms.
@@ -77,8 +52,6 @@ class ElementSubmit {
     if (!empty($triggered_element['#ief_submit_trigger_all'])) {
       // The parent form was submitted, process all IEFs and their children.
       static::doSubmit($form, $form_state);
-      // After submitting remaining elements save entities just stored in state
-      static::handleFormStateEntities($form_state);
     }
     else {
       // A specific element was submitted, process it and all of its children.
@@ -109,32 +82,6 @@ class ElementSubmit {
     if (!empty($element['#ief_element_submit'])) {
       foreach ($element['#ief_element_submit'] as $callback) {
         call_user_func_array($callback, [&$element, &$form_state]);
-      }
-    }
-  }
-
-  /**
-   * Saves all IEF entities stored in the form state.
-   *
-   * @todo This will currently probably save entities that have already been
-   *   saved. 'needs_save' is not removed on $entity->save() in
-   *   \Drupal\inline_entity_form\Plugin\Field\FieldWidget\InlineEntityFormComplex::extractFormValues
-   *
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   */
-  protected static function handleFormStateEntities(FormStateInterface $form_state) {
-    $inline_form_states = $form_state->get('inline_entity_form');
-    foreach ($inline_form_states as $inline_form_state) {
-      if (!empty($inline_form_state['entities'])) {
-        $entities = $inline_form_state['entities'];
-        foreach ($entities as $entity_info) {
-          if ($entity_info['needs_save'] == TRUE && $entity_info['entity']) {
-            /** @var \Drupal\Core\Entity\ContentEntityInterface $entity */
-            $entity = $entity_info['entity'];
-            $entity->save();
-            unset($entity_info['needs_save']);
-          }
-        }
       }
     }
   }
