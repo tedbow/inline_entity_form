@@ -37,7 +37,15 @@ function inline_entity_form_entity_type_build(array &$entity_types) {
  * Implements hook_form_alter().
  */
 function inline_entity_form_form_alter(&$form, FormStateInterface $form_state, $form_id) {
-  if ($form_state->get('inline_entity_form')) {
+  if ($inline_states = $form_state->get('inline_entity_form')) {
+    // Check all elements under form_state 'inline_entity_form' to test if any
+    // are from field widgets.
+    foreach ($inline_states as $inline_state) {
+      if (isset($inline_state['instance'])) {
+        $form['#ief_element_submit'][] = ['\Drupal\inline_entity_form\WidgetSave', 'handleFormStateEntities'];
+        break;
+      }
+    }
     ElementSubmit::attach($form, $form_state);
   }
 }

@@ -626,6 +626,7 @@ class InlineEntityFormComplex extends InlineEntityFormBase implements ContainerF
           $entity = $item['entity'];
           if (!empty($item['needs_save'])) {
             $entity->save();
+            $item['needs_save'] = FALSE;
           }
           if (!empty($item['delete'])) {
             $entity->delete();
