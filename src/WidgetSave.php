@@ -21,7 +21,7 @@ class WidgetSave {
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *  The current form state.
    */
-  public static function handleFormStateEntities(array $form, FormStateInterface $form_state) {
+  public static function saveFormStateEntities(array $form, FormStateInterface $form_state) {
     $inline_form_states = $form_state->get('inline_entity_form');
     foreach ($inline_form_states as $inline_form_state) {
       if (!empty($inline_form_state['entities'])) {

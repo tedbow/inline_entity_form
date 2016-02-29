@@ -42,7 +42,7 @@ function inline_entity_form_form_alter(&$form, FormStateInterface $form_state, $
     // are from field widgets.
     foreach ($inline_states as $inline_state) {
       if (isset($inline_state['instance'])) {
-        $form['#ief_element_submit'][] = ['\Drupal\inline_entity_form\WidgetSave', 'handleFormStateEntities'];
+        $form['#ief_element_submit'][] = ['\Drupal\inline_entity_form\WidgetSave', 'saveFormStateEntities'];
         break;
       }
     }
