@@ -33,6 +33,7 @@ class InlineEntityFormSimpleWebTest extends InlineEntityFormTestBase {
 
     $this->user = $this->createUser([
       'create ief_simple_single content',
+      'create ief_test_custom content',
       'edit any ief_simple_single content',
       'edit any ief_test_custom content',
       'view own unpublished content',
@@ -139,6 +140,19 @@ class InlineEntityFormSimpleWebTest extends InlineEntityFormTestBase {
         $this->assertEqual($child_node->bundle(),'ief_test_custom', 'Child node is correct bundle.');
       }
     }
+  }
+
+  /**
+   * Tests if the entity create access works in simple widget.
+   */
+  public function testSimpleCreateAccess() {
+    // Create a user who does not have access to create ief_test_custom nodes.
+    $this->user = $this->createUser([
+      'create ief_simple_single content',
+    ]);
+    $this->drupalLogin($this->user);
+    $this->drupalGet('node/add/ief_simple_single');
+    $this->assertNoFieldByName('single[0][inline_entity_form][title][0][value]', NULL);
   }
 
 }
