@@ -274,6 +274,9 @@ class InlineEntityFormComplex extends InlineEntityFormBase implements ContainerF
 
     // Get the fields that should be displayed in the table.
     $target_bundles = $this->getTargetBundles();
+    $create_bundles = $this->getCreateBundles();
+    $create_bundles_count = count($create_bundles);
+    $allow_new = $settings['allow_new'] && !empty($create_bundles);
     $fields = $this->inlineFormHandler->getTableFields($target_bundles);
     $context = array(
       'parent_entity_type' => $this->fieldDefinition->getTargetEntityTypeId(),
@@ -415,16 +418,15 @@ class InlineEntityFormComplex extends InlineEntityFormBase implements ContainerF
       return $element;
     }
 
-    $target_bundles_count = count($target_bundles);
     $hide_cancel = FALSE;
 
     // If the field is required and empty try to open one of the forms.
     if (empty($entities) && $this->fieldDefinition->isRequired()) {
-      if ($settings['allow_existing'] && !$settings['allow_new']) {
+      if ($settings['allow_existing'] && !$allow_new) {
         $form_state->set(['inline_entity_form', $this->getIefId(), 'form'], 'ief_add_existing');
         $hide_cancel = TRUE;
       }
-      elseif ($target_bundles_count == 1 && $settings['allow_new'] && !$settings['allow_existing']) {
+      elseif ($create_bundles_count == 1 && $allow_new && !$settings['allow_existing']) {
         $bundle = reset($target_bundles);
 
         // The parent entity type and bundle must not be the same as the inline
@@ -452,12 +454,12 @@ class InlineEntityFormComplex extends InlineEntityFormBase implements ContainerF
       );
 
       // The user is allowed to create an entity of at least one bundle.
-      if ($settings['allow_new'] && $target_bundles_count) {
+      if ($allow_new) {
         // Let the user select the bundle, if multiple are available.
-        if ($target_bundles_count > 1) {
+        if ($create_bundles_count > 1) {
           $bundles = array();
           foreach ($this->entityTypeBundleInfo->getBundleInfo($target_type) as $bundle_name => $bundle_info) {
-            if (in_array($bundle_name, $target_bundles)) {
+            if (in_array($bundle_name, $create_bundles)) {
               $bundles[$bundle_name] = $bundle_info['label'];
             }
           }
@@ -470,7 +472,7 @@ class InlineEntityFormComplex extends InlineEntityFormBase implements ContainerF
         else {
           $element['actions']['bundle'] = array(
             '#type' => 'value',
-            '#value' => reset($target_bundles),
+            '#value' => reset($create_bundles),
           );
         }
 
@@ -984,5 +986,20 @@ class InlineEntityFormComplex extends InlineEntityFormBase implements ContainerF
     $element = inline_entity_form_get_element($form, $form_state);
     inline_entity_form_close_all_forms($element, $form_state);
   }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function canBuildForm(FormStateInterface $form_state) {
+    if (parent::canBuildForm($form_state)) {
+      $settings = $this->getSettings();
+      // Return true if the user can create at least 1 bundle
+      // or adding existing entities is allowed.
+      return ($settings['allow_new'] && $this->getCreateBundles())
+        || $settings['allow_existing'];
+    }
+    return FALSE;
+  }
+
 
 }

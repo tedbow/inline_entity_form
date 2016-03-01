@@ -152,4 +152,18 @@ class InlineEntityFormSimple extends InlineEntityFormBase {
     return TRUE;
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  protected function canBuildForm(FormStateInterface $form_state) {
+    if (parent::canBuildForm($form_state)) {
+      // If no bundles can be created then form should not be shown.
+      if ($this->getCreateBundles()) {
+        return TRUE;
+      }
+    }
+    return FALSE;
+  }
+
+
 }

@@ -7,6 +7,7 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
+use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\WidgetBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
@@ -154,6 +155,9 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
     $settings = $this->getFieldSettings();
     if (!empty($settings['handler_settings']['target_bundles'])) {
       $target_bundles = array_values($settings['handler_settings']['target_bundles']);
+      // Check to make target bundles still exist.
+      $existing_bundles = array_keys($this->entityTypeBundleInfo->getBundleInfo($settings['target_type']));
+      $target_bundles = array_intersect($target_bundles, $existing_bundles);
     }
     else {
       // If no target bundles have been specified then all are available.
@@ -161,6 +165,24 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
     }
 
     return $target_bundles;
+  }
+
+  /**
+   * Gets the target bundles that current user can create in the field.
+   *
+   * @return string[]
+   *   The list of bundles.
+   */
+  protected function getCreateBundles() {
+    $target_bundles = $this->getTargetBundles();
+    $create_bundles = [];
+    // Filter out bundles the user does not have access to create.
+    foreach ($target_bundles as $bundle) {
+      if ($this->getAccessHandler()->createAccess($bundle)) {
+        $create_bundles[] = $bundle;
+      }
+    }
+    return $create_bundles;
   }
 
   /**
@@ -408,6 +430,27 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
       return $this->entityTypeManager->getStorage('entity_form_mode')->load($entity_type_id . '.' . $form_mode);
     }
     return NULL;
+  }
+
+  /**
+   * Gets the access handler for the target entity type.
+   *
+   * @return \Drupal\Core\Entity\EntityAccessControlHandlerInterface
+   *   The access handler for the target entity type.
+   */
+  protected function getAccessHandler() {
+    $entity_type_id = $this->fieldDefinition->getTargetEntityTypeId();
+    return $this->entityTypeManager->getAccessControlHandler($entity_type_id);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function form(FieldItemListInterface $items, array &$form, FormStateInterface $form_state, $get_delta = NULL) {
+    if ($this->canBuildForm($form_state)) {
+      return parent::form($items, $form, $form_state, $get_delta);
+    }
+    return [];
   }
 
 }
