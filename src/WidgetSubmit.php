@@ -3,6 +3,7 @@
 namespace Drupal\inline_entity_form;
 
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\inline_entity_form\Element\InlineEntityForm;
 
 /**
  * Performs widget submission.
@@ -44,7 +45,8 @@ class WidgetSubmit {
         if (!empty($entity_item['entity']) && !empty($entity_item['needs_save'])) {
           /** @var \Drupal\Core\Entity\ContentEntityInterface $entity */
           $entity = $entity_item['entity'];
-          $entity->save();
+          $handler = InlineEntityForm::getInlineFormHandler($entity->getEntityTypeId());
+          $handler->saveEntity($entity, $widget_state);
           $widget_state['entities'][$delta]['needs_save'] = FALSE;
         }
       }

@@ -244,7 +244,16 @@ class EntityInlineForm implements InlineFormInterface {
     if ($entity_form['#save_entity']) {
       // The entity was already validated in entityFormValidate().
       $entity->setValidationRequired(FALSE);
-      $entity->save();
+      if ($form_state->has(['inline_entity_form', $entity_form['#ief_id']])) {
+        // TODO - this is field-only part of the code. Figure out how to refactor.
+        $widget_state = $form_state->get(['inline_entity_form', $entity_form['#ief_id']]);
+        $this->saveEntity($entity, $widget_state);
+      }
+      else {
+        $this->saveEntity($entity);
+      }
+
+
     }
     // TODO - this is field-only part of the code. Figure out how to refactor.
     if ($form_state->has(['inline_entity_form', $entity_form['#ief_id']])) {
@@ -331,5 +340,13 @@ class EntityInlineForm implements InlineFormInterface {
   protected function getFormDisplay(ContentEntityInterface $entity, $form_mode) {
     return EntityFormDisplay::collectRenderDisplay($entity, $form_mode);
   }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function saveEntity(ContentEntityInterface $entity, array $widget_state = NULL) {
+    return $entity->save();
+  }
+
 
 }
