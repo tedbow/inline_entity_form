@@ -2,7 +2,6 @@
 
 namespace Drupal\inline_entity_form;
 
-use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityHandlerInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -122,15 +121,16 @@ interface InlineFormInterface extends EntityHandlerInterface {
   /**
    * Performs the save operation on the entity.
    *
-   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
+   * @param \Drupal\Core\Entity\EntityInterface $entity
    *   The Entity to be saved.
-   * @param array $widget_state
-   *   The form state information for the widget if the inline form was used
-   *   with a field widget.
+   * @param array $entity_form
+   *   The entity form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state of the parent form.
    *
    * @return int
    *   Either SAVED_NEW or SAVED_UPDATED, depending on the operation performed.
    */
-  public function saveEntity(ContentEntityInterface $entity, array $widget_state = NULL);
+  public function save(EntityInterface $entity, array $entity_form, FormStateInterface $form_state);
 
 }
