@@ -244,7 +244,7 @@ class EntityInlineForm implements InlineFormInterface {
     if ($entity_form['#save_entity']) {
       // The entity was already validated in entityFormValidate().
       $entity->setValidationRequired(FALSE);
-      $entity->save($entity, $entity_form, $form_state);
+      $entity->save($entity);
 
 
     }
@@ -337,7 +337,7 @@ class EntityInlineForm implements InlineFormInterface {
   /**
    * {@inheritdoc}
    */
-  public function save(EntityInterface $entity, array $entity_form, FormStateInterface $form_state) {
+  public function save(EntityInterface $entity) {
     $entity->save();
   }
 

@@ -123,14 +123,10 @@ interface InlineFormInterface extends EntityHandlerInterface {
    *
    * @param \Drupal\Core\Entity\EntityInterface $entity
    *   The Entity to be saved.
-   * @param array $entity_form
-   *   The entity form.
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   *   The form state of the parent form.
    *
    * @return int
    *   Either SAVED_NEW or SAVED_UPDATED, depending on the operation performed.
    */
-  public function save(EntityInterface $entity, array $entity_form, FormStateInterface $form_state);
+  public function save(EntityInterface $entity);
 
 }

@@ -46,7 +46,7 @@ class WidgetSubmit {
           /** @var \Drupal\Core\Entity\ContentEntityInterface $entity */
           $entity = $entity_item['entity'];
           $handler = InlineEntityForm::getInlineFormHandler($entity->getEntityTypeId());
-          $handler->save($entity, [], $form_state);
+          $handler->save($entity);
           $widget_state['entities'][$delta]['needs_save'] = FALSE;
         }
       }
