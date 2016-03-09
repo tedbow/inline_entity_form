@@ -70,7 +70,7 @@ class InlineEntityFormSimple extends InlineEntityFormBase {
       $items->removeItem($max);
       // Decrement the items count.
       $field_name = $element['#field_name'];
-      $parents = isset($element['#field_parents'])? $element['#field_parents']: [];
+      $parents = $element[0]['#field_parents'];
       $field_state = static::getWidgetState($parents, $field_name, $form_state);
       $field_state['items_count']--;
       static::setWidgetState($parents, $field_name, $form_state, $field_state);
