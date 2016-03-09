@@ -462,4 +462,26 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
     return $this->canBuildForm($form_state);
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  protected function formMultipleElements(FieldItemListInterface $items, array &$form, FormStateInterface $form_state) {
+    $element = parent::formMultipleElements($items, $form, $form_state);
+    if (isset($element['add_more']) && !$this->canAddNew()) {
+      // Remove add more because he user cannot create any new entities.
+      unset($element['add_more']);
+    }
+    return $element;
+  }
+
+  /**
+   * Determines if the current user can add any new entities.
+   *
+   * @return bool
+   */
+  protected function canAddNew() {
+    $create_bundles = $this->getCreateBundles();
+    return !empty($create_bundles);
+  }
+
 }
