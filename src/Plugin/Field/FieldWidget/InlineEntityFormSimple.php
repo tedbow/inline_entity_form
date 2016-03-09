@@ -27,7 +27,7 @@ class InlineEntityFormSimple extends InlineEntityFormBase {
    * {@inheritdoc}
    */
   public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
-    if (!$this->canBuildElement($element, $form_state)) {
+    if (!$this->canBuildForm($form_state)) {
       return $element;
     }
 

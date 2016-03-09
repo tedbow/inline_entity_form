@@ -454,15 +454,6 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
   }
 
   /**
-   * Determines whether an individual form element can be built.
-   *
-   * @return bool
-   */
-  public function canBuildElement(array $element, FormStateInterface $form_state) {
-    return $this->canBuildForm($form_state);
-  }
-
-  /**
    * {@inheritdoc}
    */
   protected function formMultipleElements(FieldItemListInterface $items, array &$form, FormStateInterface $form_state) {
