@@ -2,7 +2,6 @@
 
 namespace Drupal\inline_entity_form\Plugin\Field\FieldWidget;
 
-use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
@@ -31,8 +30,9 @@ class InlineEntityFormSimple extends InlineEntityFormBase {
       return $element;
     }
 
-    $entity = NULL;
     $element['#type'] = 'fieldset';
+    $this->setIefId(sha1($items->getName() . '-ief-single-' . $delta));
+    $entity = NULL;
     if ($items->get($delta)->target_id) {
       $entity = $items->get($delta)->entity;
       if (!$entity) {
@@ -40,10 +40,8 @@ class InlineEntityFormSimple extends InlineEntityFormBase {
         return $element;
       }
     }
+
     $op = isset($entity) ? 'edit' : 'add';
-
-    $this->setIefId(sha1($items->getName() . '-ief-single-' . $delta));
-
     $language = $items->getParent()->getValue()->language()->getId();
     $parents = array_merge($element['#field_parents'], [
       $items->getName(),
@@ -51,8 +49,8 @@ class InlineEntityFormSimple extends InlineEntityFormBase {
       'inline_entity_form'
     ]);
     $bundle = reset($this->getFieldSetting('handler_settings')['target_bundles']);
-
     $element['inline_entity_form'] = $this->getInlineEntityForm($op, $bundle, $language, $delta, $parents, $entity, TRUE);
+
     if ($op == 'edit') {
       /** @var \Drupal\Core\Entity\ContentEntityInterface $entity */
       if (!$entity->access('update')) {
@@ -163,6 +161,5 @@ class InlineEntityFormSimple extends InlineEntityFormBase {
 
     return TRUE;
   }
-
 
 }
