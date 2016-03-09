@@ -987,19 +987,4 @@ class InlineEntityFormComplex extends InlineEntityFormBase implements ContainerF
     inline_entity_form_close_all_forms($element, $form_state);
   }
 
-  /**
-   * {@inheritdoc}
-   */
-  protected function canBuildForm(FormStateInterface $form_state) {
-    if (parent::canBuildForm($form_state)) {
-      $settings = $this->getSettings();
-      // Return true if the user can create at least 1 bundle
-      // or adding existing entities is allowed.
-      return ($settings['allow_new'] && $this->getCreateBundles())
-        || $settings['allow_existing'];
-    }
-    return FALSE;
-  }
-
-
 }

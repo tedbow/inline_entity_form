@@ -2,6 +2,7 @@
 
 namespace Drupal\inline_entity_form\Plugin\Field\FieldWidget;
 
+use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
@@ -26,7 +27,7 @@ class InlineEntityFormSimple extends InlineEntityFormBase {
    * {@inheritdoc}
    */
   public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
-    if (!$this->canBuildForm($form_state)) {
+    if (!$this->canBuildElement($element, $form_state)) {
       return $element;
     }
 
@@ -49,8 +50,33 @@ class InlineEntityFormSimple extends InlineEntityFormBase {
       'inline_entity_form'
     ]);
     $bundle = reset($this->getFieldSetting('handler_settings')['target_bundles']);
-    $element['inline_entity_form'] = $this->getInlineEntityForm($op, $bundle, $language, $delta, $parents, $entity, TRUE);
 
+    if ($op == 'edit') {
+      /** @var \Drupal\Core\Entity\ContentEntityInterface $entity */
+      if (!$entity->access('update')) {
+        $element = [
+          '#entity_type' => $this->getFieldSetting('target_type'),
+          '#bundle' => $bundle,
+          '#language' => $language,
+          '#default_value' => $entity,
+          '#op' => 'edit',
+
+          '#ief_row_delta' => $delta,
+          // Used by Field API and controller methods to find the relevant
+          // values in $form_state.
+          '#parents' => $parents,
+          // Identifies the IEF widget to which the form belongs.
+          '#ief_id' => $this->getIefId(),
+        ];
+        $element['entity_label'] = [
+          '#type' => 'markup',
+          '#markup' => $entity->label(),
+        ];
+        return $element;
+
+      }
+    }
+    $element['inline_entity_form'] = $this->getInlineEntityForm($op, $bundle, $language, $delta, $parents, $entity, TRUE);
     return $element;
   }
 
@@ -150,19 +176,6 @@ class InlineEntityFormSimple extends InlineEntityFormBase {
     }
 
     return TRUE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function canBuildForm(FormStateInterface $form_state) {
-    if (parent::canBuildForm($form_state)) {
-      // If no bundles can be created then form should not be shown.
-      if ($this->getCreateBundles()) {
-        return TRUE;
-      }
-    }
-    return FALSE;
   }
 
 
