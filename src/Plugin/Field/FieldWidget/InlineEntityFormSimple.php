@@ -32,6 +32,7 @@ class InlineEntityFormSimple extends InlineEntityFormBase {
     }
 
     $entity = NULL;
+    $element['#type'] = 'fieldset';
     if ($items->get($delta)->target_id) {
       $entity = $items->get($delta)->entity;
       if (!$entity) {
@@ -40,8 +41,6 @@ class InlineEntityFormSimple extends InlineEntityFormBase {
       }
     }
     $op = isset($entity) ? 'edit' : 'add';
-    $element['#type'] = 'fieldset';
-
 
     $this->setIefId(sha1($items->getName() . '-ief-single-' . $delta));
 
