@@ -31,8 +31,6 @@ class InlineEntityFormSimple extends InlineEntityFormBase {
       return $element;
     }
 
-    $element['#type'] = 'fieldset';
-    $this->setIefId(sha1($items->getName() . '-ief-single-' . $delta));
     $entity = NULL;
     if ($items->get($delta)->target_id) {
       $entity = $items->get($delta)->entity;
@@ -41,8 +39,12 @@ class InlineEntityFormSimple extends InlineEntityFormBase {
         return $element;
       }
     }
-
     $op = isset($entity) ? 'edit' : 'add';
+    $element['#type'] = 'fieldset';
+
+
+    $this->setIefId(sha1($items->getName() . '-ief-single-' . $delta));
+
     $language = $items->getParent()->getValue()->language()->getId();
     $parents = array_merge($element['#field_parents'], [
       $items->getName(),
@@ -51,32 +53,17 @@ class InlineEntityFormSimple extends InlineEntityFormBase {
     ]);
     $bundle = reset($this->getFieldSetting('handler_settings')['target_bundles']);
 
+    $element['inline_entity_form'] = $this->getInlineEntityForm($op, $bundle, $language, $delta, $parents, $entity, TRUE);
     if ($op == 'edit') {
       /** @var \Drupal\Core\Entity\ContentEntityInterface $entity */
       if (!$entity->access('update')) {
-        $element = [
-          '#entity_type' => $this->getFieldSetting('target_type'),
-          '#bundle' => $bundle,
-          '#language' => $language,
-          '#default_value' => $entity,
-          '#op' => 'edit',
-
-          '#ief_row_delta' => $delta,
-          // Used by Field API and controller methods to find the relevant
-          // values in $form_state.
-          '#parents' => $parents,
-          // Identifies the IEF widget to which the form belongs.
-          '#ief_id' => $this->getIefId(),
-        ];
         $element['entity_label'] = [
           '#type' => 'markup',
           '#markup' => $entity->label(),
         ];
-        return $element;
-
+        $element['inline_entity_form']['#access'] = FALSE;
       }
     }
-    $element['inline_entity_form'] = $this->getInlineEntityForm($op, $bundle, $language, $delta, $parents, $entity, TRUE);
     return $element;
   }
 
