@@ -458,9 +458,19 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
    */
   protected function formMultipleElements(FieldItemListInterface $items, array &$form, FormStateInterface $form_state) {
     $element = parent::formMultipleElements($items, $form, $form_state);
-    if (isset($element['add_more']) && !$this->canAddNew()) {
-      // Remove "add more" because the user cannot create any new entities.
-      unset($element['add_more']);
+    if (!$this->canAddNew()) {
+      if (isset($element['add_more'])) {
+        // Remove "add more" because the user cannot create any new entities.
+        unset($element['add_more']);
+      }
+      // If the current user cannot add new entities remove "add" forms.
+      foreach (Element::children($element) as $delta) {
+        if (isset($element[$delta]['inline_entity_form'])) {
+          if ($element[$delta]['inline_entity_form']['#op'] == 'add') {
+            unset($element[$delta]);
+          }
+        }
+      }
     }
     return $element;
   }
