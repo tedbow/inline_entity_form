@@ -724,7 +724,6 @@ class InlineEntityFormComplexWebTest extends InlineEntityFormTestBase {
    * Tests create access on IEF Complex content type.
    */
   public function testComplexEntityCreate() {
-
     $user = $this->createUser([
       'create ief_test_complex content',
     ]);

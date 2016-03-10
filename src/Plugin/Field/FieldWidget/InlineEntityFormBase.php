@@ -155,7 +155,7 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
     $settings = $this->getFieldSettings();
     if (!empty($settings['handler_settings']['target_bundles'])) {
       $target_bundles = array_values($settings['handler_settings']['target_bundles']);
-      // Check to make target bundles still exist.
+      // Checks to make sure target bundles still exist.
       $existing_bundles = array_keys($this->entityTypeBundleInfo->getBundleInfo($settings['target_type']));
       $target_bundles = array_intersect($target_bundles, $existing_bundles);
     }
@@ -451,28 +451,6 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
       return parent::form($items, $form, $form_state, $get_delta);
     }
     return [];
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function formMultipleElements(FieldItemListInterface $items, array &$form, FormStateInterface $form_state) {
-    $element = parent::formMultipleElements($items, $form, $form_state);
-    if (!$this->canAddNew()) {
-      if (isset($element['add_more'])) {
-        // Remove "add more" because the user cannot create any new entities.
-        unset($element['add_more']);
-      }
-      // If the current user cannot add new entities remove "add" forms.
-      foreach (Element::children($element) as $delta) {
-        if (isset($element[$delta]['inline_entity_form'])) {
-          if ($element[$delta]['inline_entity_form']['#op'] == 'add') {
-            unset($element[$delta]);
-          }
-        }
-      }
-    }
-    return $element;
   }
 
   /**

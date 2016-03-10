@@ -86,6 +86,22 @@ class InlineEntityFormSimple extends InlineEntityFormBase {
       static::setWidgetState($parents, $field_name, $form_state, $field_state);
     }
 
+    // Remove add options if the user cannot add new entities.
+    if (!$this->canAddNew()) {
+      if (isset($element['add_more'])) {
+        // Remove "add more" because the user cannot create any new entities.
+        unset($element['add_more']);
+      }
+      // If the current user cannot add new entities remove "add" forms.
+      foreach (Element::children($element) as $delta) {
+        if (isset($element[$delta]['inline_entity_form'])) {
+          if ($element[$delta]['inline_entity_form']['#op'] == 'add') {
+            unset($element[$delta]);
+          }
+        }
+      }
+    }
+
     return $element;
   }
 
