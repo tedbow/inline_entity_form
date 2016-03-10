@@ -59,6 +59,8 @@ class InlineEntityFormSimple extends InlineEntityFormBase {
           '#type' => 'markup',
           '#markup' => $entity->label(),
         ];
+        // Take away access to inline form.
+        // getInlineEntityForm still needs to be called for field re-ordering to work.
         $element['inline_entity_form']['#access'] = FALSE;
       }
     }
