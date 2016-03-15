@@ -56,13 +56,6 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
   protected $entityDisplayRepository;
 
   /**
-   * The content translation manager.
-   *
-   * @var \Drupal\content_translation\ContentTranslationManagerInterface
-   */
-  protected $translationManager;
-
-  /**
    * Constructs an InlineEntityFormBase object.
    *
    * @param array $plugin_id
@@ -81,16 +74,13 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
    *   The entity type manager.
    * @param \Drupal\Core\Entity\EntityDisplayRepositoryInterface
    *   The entity display repository.
-   * @param \Drupal\content_translation\ContentTranslationManagerInterface
-   *   The content translation manager.
    */
-  public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings, EntityTypeBundleInfoInterface $entity_type_bundle_info, EntityTypeManagerInterface $entity_type_manager, EntityDisplayRepositoryInterface $entity_display_repository, ContentTranslationManagerInterface $translation_manager) {
+  public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings, EntityTypeBundleInfoInterface $entity_type_bundle_info, EntityTypeManagerInterface $entity_type_manager, EntityDisplayRepositoryInterface $entity_display_repository) {
     parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $third_party_settings);
 
     $this->entityTypeBundleInfo = $entity_type_bundle_info;
     $this->entityTypeManager = $entity_type_manager;
     $this->entityDisplayRepository = $entity_display_repository;
-    $this->translationManager = $translation_manager;
     $this->createInlineFormHandler();
   }
 
@@ -106,8 +96,7 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
       $configuration['third_party_settings'],
       $container->get('entity_type.bundle.info'),
       $container->get('entity_type.manager'),
-      $container->get('entity_display.repository'),
-      $container->get('content_translation.manager')
+      $container->get('entity_display.repository')
     );
   }
 
@@ -502,7 +491,10 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
       if ($entity->getEntityType()->isRevisionable()) {
         $entity->setRevisionTranslationAffected(NULL);
       }
-      $metadata = $this->translationManager->getTranslationMetadata($entity);
+
+      /** @var ContentTranslationManagerInterface $translation_manager */
+      $translation_manager = \Drupal::service('content_translation.manager');
+      $metadata = $translation_manager->getTranslationMetadata($entity);
       $metadata->setSource($parent_langcode);
     }
     // Return the entity with the correct translation.
