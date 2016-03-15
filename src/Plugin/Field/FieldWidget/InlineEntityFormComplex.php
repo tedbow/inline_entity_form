@@ -237,18 +237,7 @@ class InlineEntityFormComplex extends InlineEntityFormBase implements ContainerF
         foreach ($items as $delta => $item) {
           if ($item->entity && is_object($item->entity)) {
             if ($item->entity->isTranslatable()) {
-              // If target translation is not yet available, populate it with data from the original entity.
-              if ($item->entity->language()->getId() != $target_langcode && !$item->entity->hasTranslation($target_langcode)) {
-                $item->entity = $item->entity->addTranslation($target_langcode, $item->entity->toArray());
-                if ($item->entity->getEntityType()->isRevisionable()) {
-                  $item->entity->setRevisionTranslationAffected(NULL);
-                }
-                $metadata = \Drupal::service('content_translation.manager')->getTranslationMetadata($item->entity);
-                $metadata->setSource($parent_langcode);
-              }
-
-              // Initiate the entity with the correct translation.
-              $item->entity = $item->entity->getTranslation($target_langcode);
+              $item->entity = $this->getEntityItemTranslation($item->entity, $target_langcode, $parent_langcode);
             }
 
             $form_state->set(['inline_entity_form', $this->getIefId(), 'entities', $delta], array(

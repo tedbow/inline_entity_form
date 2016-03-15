@@ -2,6 +2,8 @@
 
 namespace Drupal\inline_entity_form\Plugin\Field\FieldWidget;
 
+use Drupal\content_translation\ContentTranslationManagerInterface;
+use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityDisplayRepositoryInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
@@ -54,6 +56,13 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
   protected $entityDisplayRepository;
 
   /**
+   * The content translation manager.
+   *
+   * @var \Drupal\content_translation\ContentTranslationManagerInterface
+   */
+  protected $translationManager;
+
+  /**
    * Constructs an InlineEntityFormBase object.
    *
    * @param array $plugin_id
@@ -72,13 +81,16 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
    *   The entity type manager.
    * @param \Drupal\Core\Entity\EntityDisplayRepositoryInterface
    *   The entity display repository.
+   * @param \Drupal\content_translation\ContentTranslationManagerInterface
+   *   The content translation manager.
    */
-  public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings, EntityTypeBundleInfoInterface $entity_type_bundle_info, EntityTypeManagerInterface $entity_type_manager, EntityDisplayRepositoryInterface $entity_display_repository) {
+  public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings, EntityTypeBundleInfoInterface $entity_type_bundle_info, EntityTypeManagerInterface $entity_type_manager, EntityDisplayRepositoryInterface $entity_display_repository, ContentTranslationManagerInterface $translation_manager) {
     parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $third_party_settings);
 
     $this->entityTypeBundleInfo = $entity_type_bundle_info;
     $this->entityTypeManager = $entity_type_manager;
     $this->entityDisplayRepository = $entity_display_repository;
+    $this->translationManager = $translation_manager;
     $this->createInlineFormHandler();
   }
 
@@ -94,7 +106,8 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
       $configuration['third_party_settings'],
       $container->get('entity_type.bundle.info'),
       $container->get('entity_type.manager'),
-      $container->get('entity_display.repository')
+      $container->get('entity_display.repository'),
+      $container->get('content_translation.manager')
     );
   }
 
@@ -470,6 +483,30 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
   protected function canAddNew() {
     $create_bundles = $this->getCreateBundles();
     return !empty($create_bundles);
+  }
+
+  /**
+   * Gets the translation for the entity item.
+   *
+   * @param \Drupal\Core\Entity\ContentEntityInterface
+   *   The entity for an IEF item.
+   * @param $target_langcode
+   *   The target language code.
+   * @param $parent_langcode
+   *   The parent entity language code.
+   */
+  protected function getEntityItemTranslation(ContentEntityInterface $entity, $target_langcode, $parent_langcode) {
+    // If target translation is not yet available, populate it with data from the original entity.
+    if ($entity->language()->getId() != $target_langcode && !$entity->hasTranslation($target_langcode)) {
+      $entity = $entity->addTranslation($target_langcode, $entity->toArray());
+      if ($entity->getEntityType()->isRevisionable()) {
+        $entity->setRevisionTranslationAffected(NULL);
+      }
+      $metadata = $this->translationManager->getTranslationMetadata($entity);
+      $metadata->setSource($parent_langcode);
+    }
+    // Return the entity with the correct translation.
+    return $entity->getTranslation($target_langcode);
   }
 
 }
