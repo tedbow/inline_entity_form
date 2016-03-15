@@ -36,6 +36,21 @@ class InlineEntityFormSimple extends InlineEntityFormBase {
         $element['warning']['#markup'] = $this->t('Unable to load the referenced entity.');
         return $element;
       }
+
+      if ($entity->isTranslatable()) {
+        $target_langcode = $this->getCurrentLangcode($form_state, $items);
+        // If target translation is not yet available, populate it with data from the original entity.
+        if ($entity->language()->getId() != $target_langcode && !$entity->hasTranslation($target_langcode)) {
+          $entity = $entity->addTranslation($target_langcode, $entity->toArray());
+          if ($entity->getEntityType()->isRevisionable()) {
+            $entity->setRevisionTranslationAffected(NULL);
+          }
+          $metadata = \Drupal::service('content_translation.manager')->getTranslationMetadata($entity);
+          $metadata->setSource($parent_langcode);
+        }
+        // Initiate the entity with the correct translation.
+        $entity = $entity->getTranslation($target_langcode);
+      }
     }
 
     $op = isset($entity) ? 'edit' : 'add';

@@ -353,6 +353,17 @@ abstract class InlineEntityFormBase extends WidgetBase implements ContainerFacto
   }
 
   /**
+   * Gets current language code from the form state or item.
+   *
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   * @param \Drupal\Core\Field\FieldItemListInterface $items
+   * @return string
+   */
+  protected function getCurrentLangcode(FormStateInterface $form_state, FieldItemListInterface $items) {
+    return $form_state->get('langcode') ?: $items->getEntity()->language()->getId();
+  }
+
+  /**
    * Adds submit callbacks to the inline entity form.
    *
    * @param array $element

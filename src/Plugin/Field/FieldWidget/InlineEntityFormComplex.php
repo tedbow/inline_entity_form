@@ -192,6 +192,7 @@ class InlineEntityFormComplex extends InlineEntityFormBase implements ContainerF
 
     // Get the langcode of the parent entity.
     $parent_langcode = $items->getParent()->getValue()->language()->getId();
+    $target_langcode = $form_state->get('langcode') ?: $parent_langcode;
 
     // Determine the wrapper ID for the entire element.
     $wrapper = 'inline-entity-form-' . $this->getIefId();
@@ -232,8 +233,24 @@ class InlineEntityFormComplex extends InlineEntityFormBase implements ContainerF
       $form_state->set(['inline_entity_form', $this->getIefId(), 'entities'], array());
 
       if (count($items)) {
+        $target_langcode = $this->getCurrentLangcode($form_state, $items);
         foreach ($items as $delta => $item) {
           if ($item->entity && is_object($item->entity)) {
+            if ($item->entity->isTranslatable()) {
+              // If target translation is not yet available, populate it with data from the original entity.
+              if ($item->entity->language()->getId() != $target_langcode && !$item->entity->hasTranslation($target_langcode)) {
+                $item->entity = $item->entity->addTranslation($target_langcode, $item->entity->toArray());
+                if ($item->entity->getEntityType()->isRevisionable()) {
+                  $item->entity->setRevisionTranslationAffected(NULL);
+                }
+                $metadata = \Drupal::service('content_translation.manager')->getTranslationMetadata($item->entity);
+                $metadata->setSource($parent_langcode);
+              }
+
+              // Initiate the entity with the correct translation.
+              $item->entity = $item->entity->getTranslation($target_langcode);
+            }
+
             $form_state->set(['inline_entity_form', $this->getIefId(), 'entities', $delta], array(
               'entity' => $item->entity,
               '_weight' => $delta,
@@ -312,7 +329,7 @@ class InlineEntityFormComplex extends InlineEntityFormBase implements ContainerF
             'inline_entity_form' => $this->getInlineEntityForm(
               $value['form'],
               $entity->bundle(),
-              $parent_langcode,
+              $target_langcode,
               $key,
               array_merge($parents,  ['inline_entity_form', 'entities', $key, 'form']),
               $entity
@@ -510,7 +527,7 @@ class InlineEntityFormComplex extends InlineEntityFormBase implements ContainerF
           'inline_entity_form' => $this->getInlineEntityForm(
             'add',
             $this->determineBundle($form_state),
-            $parent_langcode,
+            $target_langcode,
             NULL,
             array_merge($parents, ['inline_entity_form'])
           )
@@ -533,7 +550,7 @@ class InlineEntityFormComplex extends InlineEntityFormBase implements ContainerF
           // Pass the current entity type.
           '#entity_type' => $target_type,
           // Pass the langcode of the parent entity,
-          '#parent_language' => $parent_langcode,
+          '#parent_language' => $target_langcode,
           // Pass the widget specific labels.
           '#ief_labels' => $this->getEntityTypeLabels(),
         );
