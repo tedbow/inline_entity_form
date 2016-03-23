@@ -61,6 +61,7 @@ class ComplexSimpleWidgetTest extends InlineEntityFormTestBase {
     /** @var FieldConfig $field_config */
     $field_config = $this->fieldConfigStorage->load('node.ief_complex_simple.ief_complex_outer');
     foreach ($outer_required_options as $outer_required_option) {
+      $edit = [];
       $field_config->setRequired($outer_required_option);
       $field_config->save();
       foreach ($cardinality_options as $cardinality => $limit) {
@@ -68,7 +69,7 @@ class ComplexSimpleWidgetTest extends InlineEntityFormTestBase {
         $field_storage->save();
         $this->drupalGet('node/add/ief_complex_simple');
         $host_title = 'Host node cardinality: ' . $cardinality;
-        $edit = ['title[0][value]' => $host_title];
+        $edit['title[0][value]'] = $host_title;
         if (!$outer_required_option) {
           // @todo Title only field only show up if it is required. Is this expected?
           $this->assertText('Complex Outer', 'Complex Inline entity field widget title found.');
@@ -80,6 +81,12 @@ class ComplexSimpleWidgetTest extends InlineEntityFormTestBase {
         $this->assertFieldByName('ief_complex_outer[form][inline_entity_form][title][0][value]', NULL);
         // Simple widget is required so should always show up. No need for add submit.
         $this->assertFieldByName('ief_complex_outer[form][inline_entity_form][single][0][inline_entity_form][title][0][value]', NULL);
+        $edit['ief_complex_outer[form][inline_entity_form][title][0][value]'] = 'Outer title';
+        $edit['ief_complex_outer[form][inline_entity_form][single][0][inline_entity_form][title][0][value]'] = 'Inner Title';
+        $this->drupalPostAjaxForm(NULL, $edit, $this->getButtonName('//input[@type="submit" and @value="Create node" and @data-drupal-selector="edit-ief-complex-outer-form-inline-entity-form-actions-ief-add-save"]'));
+
+        $this->assertNoFieldByName('ief_complex_outer[form][inline_entity_form][title][0][value]', NULL);
+
         //$this->drupalPostForm(NULL, $edit, t('Save'));
       }
 
