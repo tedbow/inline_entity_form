@@ -34,11 +34,7 @@ class ComplexSimpleWidgetTest extends InlineEntityFormTestBase {
     $this->user = $this->createUser([
       'create ief_complex_simple content',
       'create ief_simple_single content',
-      'edit any ief_simple_single content',
       'create ief_test_custom content',
-      'edit any ief_test_custom content',
-      'delete any ief_simple_single content',
-      'delete any ief_test_custom content',
       'view own unpublished content',
     ]);
     $this->drupalLogin($this->user);
@@ -46,6 +42,9 @@ class ComplexSimpleWidgetTest extends InlineEntityFormTestBase {
   }
 
 
+  /**
+   * Test a Simple IEF widget inside of Complex IEF widget.
+   */
   public function testSimpleInComplex() {
     $outer_required_options = [
       TRUE,
@@ -68,28 +67,51 @@ class ComplexSimpleWidgetTest extends InlineEntityFormTestBase {
         $field_storage->setCardinality($cardinality);
         $field_storage->save();
         $this->drupalGet('node/add/ief_complex_simple');
-        $host_title = 'Host node cardinality: ' . $cardinality;
-        $edit['title[0][value]'] = $host_title;
+
+        $outer_title_field = 'ief_complex_outer[form][inline_entity_form][title][0][value]';
+        $inner_title_field = 'ief_complex_outer[form][inline_entity_form][single][0][inline_entity_form][title][0][value]';
         if (!$outer_required_option) {
           // @todo Title only field only show up if it is required. Is this expected?
           $this->assertText('Complex Outer', 'Complex Inline entity field widget title found.');
           // Field should not be available before ajax submit.
-          $this->assertNoFieldByName('ief_complex_outer[form][inline_entity_form][title][0][value]', NULL);
+          $this->assertNoFieldByName($outer_title_field, NULL);
           // Now submit 'Add new node' button.
           $this->drupalPostAjaxForm(NULL, [], $this->getButtonName('//input[@type="submit" and @value="Add new node" and @data-drupal-selector="edit-ief-complex-outer-actions-ief-add"]'));
         }
-        $this->assertFieldByName('ief_complex_outer[form][inline_entity_form][title][0][value]', NULL);
+        $this->assertFieldByName($outer_title_field, NULL);
         // Simple widget is required so should always show up. No need for add submit.
-        $this->assertFieldByName('ief_complex_outer[form][inline_entity_form][single][0][inline_entity_form][title][0][value]', NULL);
-        $edit['ief_complex_outer[form][inline_entity_form][title][0][value]'] = 'Outer title';
-        $edit['ief_complex_outer[form][inline_entity_form][single][0][inline_entity_form][title][0][value]'] = 'Inner Title';
-        $this->drupalPostAjaxForm(NULL, $edit, $this->getButtonName('//input[@type="submit" and @value="Create node" and @data-drupal-selector="edit-ief-complex-outer-form-inline-entity-form-actions-ief-add-save"]'));
+        $this->assertFieldByName($inner_title_field, NULL);
 
-        $this->assertNoFieldByName('ief_complex_outer[form][inline_entity_form][title][0][value]', NULL);
+        $edit[$outer_title_field] = $outer_title = 'Outer title';
+        $edit[$inner_title_field] = $inner_title = 'Inner Title';
+        $create_outer_button_selector = '//input[@type="submit" and @value="Create node" and @data-drupal-selector="edit-ief-complex-outer-form-inline-entity-form-actions-ief-add-save"]';
+        $this->drupalPostAjaxForm(NULL, $edit, $this->getButtonName($create_outer_button_selector));
+        // After ajax submit the ief title fields should be gone.
+        $this->assertNoFieldByName($outer_title_field, NULL);
+        $this->assertNoFieldByName($inner_title_field, NULL);
+        $this->assertEqual('', $this->getButtonName('//input[@type="submit" and @value="Create node" and @data-drupal-selector="edit-ief-complex-outer-form-inline-entity-form-actions-ief-add-save"]'));
 
-        //$this->drupalPostForm(NULL, $edit, t('Save'));
+        $this->assertNoFieldByName($outer_title_field, NULL);
+
+        $host_title = 'Host node cardinality: ' . $cardinality;
+        $edit = ['title[0][value]' => $host_title];
+        $this->drupalPostForm(NULL, $edit, t('Save'));
+        $this->assertText("$host_title has been created.");
+        $this->assertText($outer_title);
+
+        // Check the nodes were created correctly.
+        $host_node = $this->drupalGetNodeByTitle($host_title);
+        if ($this->assertNotNull($host_node->ief_complex_outer->entity, 'Outer node was created.')) {
+          $outer_node = $host_node->ief_complex_outer->entity;
+          $this->assertEqual($outer_title, $outer_node->label(), "Outer node's title looks correct.");
+          $this->assertEqual('ief_simple_single', $outer_node->bundle(), "Outer node's type looks correct.");
+          if ($this->assertNotNull($outer_node->single->entity, 'Inner node was created')) {
+            $inner_node = $outer_node->single->entity;
+            $this->assertEqual($inner_title, $inner_node->label(), "Inner node's title looks correct.");
+            $this->assertEqual('ief_test_custom', $inner_node->bundle(), "Inner node's type looks correct.");
+          }
+        }
       }
-
     }
   }
 
