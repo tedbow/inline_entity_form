@@ -10,7 +10,7 @@ field_name: ief_complex_outer
 entity_type: node
 bundle: ief_complex_simple
 label: 'Complex Outer'
-description: ''
+description: 'Reference nodes with complex widget outer.'
 required: false
 translatable: false
 default_value: {  }

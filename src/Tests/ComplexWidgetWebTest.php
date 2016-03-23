@@ -37,13 +37,6 @@ class ComplexWidgetWebTest extends InlineEntityFormTestBase {
   protected $entityFormDisplayStorage;
 
   /**
-   * Field config storage.
-   *
-   * @var \Drupal\Core\Config\Entity\ConfigEntityStorageInterface
-   */
-  protected $fieldConfigStorage;
-
-  /**
    * Prepares environment for
    */
   protected function setUp() {
@@ -66,7 +59,6 @@ class ComplexWidgetWebTest extends InlineEntityFormTestBase {
 
     $this->formContentAddUrl = 'node/add/ief_test_complex';
     $this->entityFormDisplayStorage = $this->container->get('entity_type.manager')->getStorage('entity_form_display');
-    $this->fieldConfigStorage = $this->container->get('entity_type.manager')->getStorage('field_config');
   }
 
   /**
